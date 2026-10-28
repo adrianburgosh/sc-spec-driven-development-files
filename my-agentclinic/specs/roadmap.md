@@ -1,0 +1,61 @@
+# Roadmap
+
+Nano phases: each phase is a very small slice of 1–3 features, shippable in a day or less. Finish, test, and commit each phase before starting the next.
+
+## Phase 1 — Hello, clinic
+- Install Hono and serve a home page with a "Welcome to AgentClinic" message.
+- Add `dev` and `test` npm scripts, plus one Vitest route test.
+
+## Phase 2 — Layout & look
+- Shared JSX layout (header, nav, footer).
+- Base stylesheet with the clinic's colors and typography.
+
+## Phase 3 — Database
+- Add SQLite with a schema file and startup migration.
+- Seed script with a few sample agents.
+
+## Phase 4 — Agents list
+- `/agents` page listing all agents.
+
+## Phase 5 — Agent detail
+- `/agents/:id` page showing one agent's profile.
+
+## Phase 6 — Ailments
+- Ailments table and seed data.
+- `/ailments` page listing ailments.
+
+## Phase 7 — Agent ailments
+- Link agents to ailments.
+- Show an agent's ailments on their detail page.
+
+## Phase 8 — Therapies
+- Therapies table and seed data.
+- `/therapies` page listing therapies.
+
+## Phase 9 — Therapies for ailments
+- Link therapies to the ailments they treat.
+- Show recommended therapies on each ailment.
+
+## Phase 10 — Appointments list
+- Appointments table (agent, therapy, time slot).
+- `/appointments` page listing upcoming appointments.
+
+## Phase 11 — Book an appointment
+- Booking form (agent, therapy, time slot).
+- Validate input and prevent double-booking a slot.
+
+## Phase 12 — Cancel an appointment
+- Cancel action for an existing appointment.
+
+## Phase 13 — Agent dashboard
+- Agent dashboard: my ailments, suggested therapies, my upcoming appointments.
+
+## Phase 14 — Staff dashboard
+- Staff dashboard: today's appointments and clinic counts at a glance.
+
+## Phase 15 — Staff management
+- Staff forms to add/edit agents, ailments, and therapies.
+
+## Phase 16 — Polish
+- Responsive layout pass and friendly empty/error states.
+- Accessibility pass (semantic HTML, contrast, keyboard navigation).
