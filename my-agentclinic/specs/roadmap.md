@@ -2,13 +2,15 @@
 
 Nano phases: each phase is a very small slice of 1–3 features, shippable in a day or less. Finish, validate (`npm run validate`), and commit each phase before starting the next.
 
+Every phase that adds or changes UI builds it responsive from the start (mobile-first, see `tech-stack.md`), so there is no separate "make it responsive" phase.
+
 ## Phase 1 — Hello, clinic
 - Install Hono and serve a home page with a "Welcome to AgentClinic" message.
 - Add `dev` and `test` npm scripts, plus one Vitest route test.
 
 ## Phase 2 — Layout & look
 - Shared JSX layout (header, nav, footer).
-- Base stylesheet with the clinic's colors and typography.
+- Base mobile-first stylesheet with the clinic's colors and typography.
 
 ## Phase 3 — Database
 - Add SQLite with a schema file and startup migration.
@@ -57,5 +59,5 @@ Nano phases: each phase is a very small slice of 1–3 features, shippable in a 
 - Staff forms to add/edit agents, ailments, and therapies.
 
 ## Phase 16 — Polish
-- Responsive layout pass and friendly empty/error states.
+- Cross-device review of all pages (phone, tablet, desktop) and friendly empty/error states.
 - Accessibility pass (semantic HTML, contrast, keyboard navigation).

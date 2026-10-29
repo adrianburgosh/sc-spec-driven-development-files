@@ -19,6 +19,12 @@ Guiding principle: a popular, reliable, TypeScript-first stack with as few movin
 - **Plain modern CSS** (custom properties, grid, flexbox, nesting) in a single stylesheet served statically.
 - Progressive enhancement only — the site must work without client-side JavaScript; small sprinkles of vanilla JS are allowed where they clearly help.
 - Target: evergreen modern browsers (latest Chrome, Firefox, Safari, Edge).
+- **Responsive design, mobile-first:**
+  - Every page ships with `<meta name="viewport" content="width=device-width, initial-scale=1">` (set once in the shared layout).
+  - Base styles target small screens; wider screens are layered on with `min-width` media queries.
+  - Fluid layouts: flexbox/grid, relative units (`rem`, `%`), `min()`/`clamp()` for widths, spacing, and type — no fixed pixel widths for layout.
+  - Every page is usable from 320px wide up to large desktops with no horizontal scrolling; reference widths for checks are 360px (phone), 768px (tablet), and 1280px (desktop).
+  - Responsiveness is part of every feature, not a later pass: each feature spec includes it in its scope and validation.
 
 ## Data
 
@@ -31,6 +37,7 @@ Guiding principle: a popular, reliable, TypeScript-first stack with as few movin
 - `tsc --noEmit` type checking as part of the test run.
 - **Vitest is the validation tool for every phase:** each automated check in a feature spec's `validation.md` is backed by a Vitest test, so a phase is validated by running the suite rather than by checking things by hand.
 - `npm run validate` is the single command that validates a phase: typecheck, the full Vitest suite, and a production build. It must exit 0 before a phase is merged.
+- Responsive behavior that Vitest can't see (how the page actually lays out) is checked by hand at the three reference widths as part of each phase's manual smoke check.
 
 ## Tooling
 

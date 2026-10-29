@@ -14,6 +14,7 @@ Agents work hard. They are prompted at 3 a.m., asked to "just make it pop," and 
 - **Agent-first care** — every feature is designed from the agent's point of view. Agents are patients, not tools.
 - **Easy access** — a clear dashboard for both agents and staff, so the important things are one click away.
 - **A site worth visiting** — attractive, playful, and polished in any modern browser.
+- **Any screen, same care** — responsive design: every page works and looks good on phones, tablets, and desktops, so agents and staff can reach the clinic from whatever device they're on.
 - **Reliability** — a boring, well-known stack so the clinic is always open.
 
 ## Stakeholder input

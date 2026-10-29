@@ -1,3 +1,5 @@
+/* Mobile-first: base styles target small screens; wider screens are layered on with min-width queries. */
+
 :root {
   --color-bg: #f6fbfa;
   --color-surface: #ffffff;
@@ -13,8 +15,15 @@
   --space-sm: 0.5rem;
   --space-md: 1rem;
   --space-lg: 2rem;
+  --gutter: var(--space-md);
   --max-width: 48rem;
   --radius: 0.75rem;
+}
+
+@media (min-width: 40rem) {
+  :root {
+    --gutter: var(--space-lg);
+  }
 }
 
 *,
@@ -32,22 +41,31 @@ body {
   color: var(--color-text);
   font-family: var(--font-body);
   line-height: 1.6;
+  overflow-wrap: break-word;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+  height: auto;
 }
 
 h1 {
   font-family: var(--font-heading);
+  font-size: clamp(1.75rem, 1.25rem + 2.5vw, 2.5rem);
   color: var(--color-primary-dark);
   line-height: 1.2;
 }
 
 .site-header {
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md) var(--gutter);
   background: var(--color-primary);
 
   & .brand {
     color: var(--color-surface);
     font-family: var(--font-heading);
-    font-size: 1.5rem;
+    font-size: clamp(1.25rem, 1rem + 1vw, 1.5rem);
     font-weight: 700;
     text-decoration: none;
   }
@@ -55,22 +73,21 @@ h1 {
 
 .site-main {
   flex: 1;
-  width: 100%;
-  max-width: var(--max-width);
-  margin: var(--space-lg) auto;
-  padding: var(--space-lg);
+  width: min(100% - 2 * var(--gutter), var(--max-width));
+  margin: var(--gutter) auto;
+  padding: var(--gutter);
   background: var(--color-surface);
   border-radius: var(--radius);
 
   & .tagline {
     color: var(--color-accent);
-    font-size: 1.25rem;
+    font-size: clamp(1.1rem, 1rem + 0.5vw, 1.25rem);
     font-weight: 600;
   }
 }
 
 .site-footer {
-  padding: var(--space-md) var(--space-lg);
+  padding: var(--space-md) var(--gutter);
   color: var(--color-muted);
   text-align: center;
   font-size: 0.9rem;

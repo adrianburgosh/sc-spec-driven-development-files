@@ -16,7 +16,7 @@ describe('GET /', () => {
     expect(body.startsWith('<!DOCTYPE html>')).toBe(true)
     expect(body).toContain('<html lang="en">')
     expect(body).toContain('<meta charset="utf-8"/>')
-    expect(body).toContain('<meta name="viewport"')
+    expect(body).toContain('<meta name="viewport" content="width=device-width, initial-scale=1"/>')
     expect(body).toContain('<title>AgentClinic</title>')
     expect(body).toContain('<link rel="stylesheet" href="/styles.css"/>')
   })

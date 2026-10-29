@@ -9,7 +9,7 @@ Leave the checkboxes unticked: report the results instead of marking them, and d
 - [ ] `npm run validate` exits 0. It runs `tsc --noEmit` (strict mode, no type errors), the full Vitest suite, and the production build. The suite backs every check below:
   - `src/app.test.ts`, `GET /`:
     - status is `200` and `Content-Type` includes `text/html`
-    - body starts with `<!DOCTYPE html>` and contains `<html lang="en">`, `<meta charset="utf-8">`, a viewport meta tag, `<title>AgentClinic</title>` and `<link rel="stylesheet" href="/styles.css">`
+    - body starts with `<!DOCTYPE html>` and contains `<html lang="en">`, `<meta charset="utf-8">`, `<meta name="viewport" content="width=device-width, initial-scale=1">`, `<title>AgentClinic</title>` and `<link rel="stylesheet" href="/styles.css">`
     - a `<header>` with the clinic name linking to `/`
     - a `<main>` with `<h1>Welcome to AgentClinic</h1>`, the tagline "A place for AI agents to get relief from their humans." and the intro paragraph (ailments, therapies, appointments)
     - a `<footer>`
@@ -22,6 +22,7 @@ Leave the checkboxes unticked: report the results instead of marking them, and d
 ## Manual smoke check
 
 - [ ] `npm run dev`, then open `http://localhost:3000/`: the server starts and the home page shows up styled.
+- [ ] Responsive check: at 360px (phone), 768px (tablet), and 1280px (desktop) wide, the header, main card, and footer fit the viewport with no horizontal scrolling, text stays readable, and the main card keeps a visible gutter on each side.
 
 ## Scope guard (review)
 

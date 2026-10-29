@@ -65,3 +65,14 @@
 7.3. Add `src/views/Layout.test.tsx`: `Layout` composes `Header`, `Main` and `Footer` in order, with the content inside `Main`, and uses the given `title`.
 7.4. Rewrite `validation.md` around `npm run validate`, keeping only a manual smoke check and a scope review.
 7.5. Run `npm run validate`, then commit.
+
+## 8. Responsive design
+
+8.1. Make `public/styles.css` mobile-first:
+  - a `--gutter` custom property (`1rem` on small screens, `2rem` from `40rem` up via a `min-width` media query) used for header, main, and footer spacing
+  - `.site-main` sized with `width: min(100% - 2 * var(--gutter), var(--max-width))` and centered, so it never overflows the viewport
+  - fluid type with `clamp()` for the heading, brand, and tagline
+  - `overflow-wrap: break-word` on the body and `max-width: 100%` on media, so long words and future images can't cause horizontal scrolling
+8.2. Assert in `src/app.test.ts` that the viewport meta tag is exactly `width=device-width, initial-scale=1`.
+8.3. Add a manual responsive check to `validation.md` at 360px, 768px, and 1280px.
+8.4. Run `npm run validate` and the manual responsive check, then commit.
