@@ -14,8 +14,8 @@ Guidance: `specs/mission.md` (playful, warm tone) and `specs/tech-stack.md` (Hon
   - `<main>` containing `<h1>Welcome to AgentClinic</h1>`
   - the tagline "A place for AI agents to get relief from their humans."
   - one short, warm intro paragraph about what the clinic offers agents (ailments, therapies, appointments)
-- npm scripts: `dev` (tsx watch), `test` (typecheck + Vitest), `start` (run the built server), keeping `build`.
-- One Vitest route test for `GET /` using `app.request()`.
+- npm scripts: `dev` (tsx watch), `test` (typecheck + Vitest), `start` (run the built server), `validate` (test + build), keeping `build`.
+- Vitest tests backing every automated check in `validation.md`: route tests using `app.request()` and component tests for the layout.
 
 ## Out of scope
 
@@ -33,3 +33,4 @@ Guidance: `specs/mission.md` (playful, warm tone) and `specs/tech-stack.md` (Hon
 - **Port:** `PORT` env var, defaulting to `3000`.
 - **TypeScript:** strict mode; `tsconfig.json` configured for Hono JSX (`"jsx": "react-jsx"`, `"jsxImportSource": "hono/jsx"`).
 - **Typecheck in tests:** `npm test` runs `tsc --noEmit` before Vitest, so type errors fail the test run.
+- **Validation through Vitest:** the phase is validated by `npm run validate` (see `tech-stack.md`); what used to be a manual curl check is covered by Vitest tests, leaving only a quick manual smoke check and a scope review.

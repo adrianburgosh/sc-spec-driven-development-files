@@ -1,6 +1,6 @@
 # Roadmap
 
-Nano phases: each phase is a very small slice of 1–3 features, shippable in a day or less. Finish, test, and commit each phase before starting the next.
+Nano phases: each phase is a very small slice of 1–3 features, shippable in a day or less. Finish, validate (`npm run validate`), and commit each phase before starting the next.
 
 ## Phase 1 — Hello, clinic
 - Install Hono and serve a home page with a "Welcome to AgentClinic" message.

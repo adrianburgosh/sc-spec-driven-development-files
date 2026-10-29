@@ -57,3 +57,11 @@
   - `src/views/Footer.tsx` exporting `Footer`
 6.2. `Layout.tsx` imports `Header`, `Main` and `Footer` and keeps only the document shell and their composition.
 6.3. No change to the rendered HTML: run `npm test` and the manual curl check, then commit.
+
+## 7. Validation through Vitest
+
+7.1. Add a `validate` npm script: `npm test && npm run build`.
+7.2. Move the manual curl checks into `src/app.test.ts` (`GET /`): doctype, `lang`, charset and viewport metas, title, stylesheet link, header link to `/`, `<main>` with heading/tagline/intro, footer, and that the body is exactly what `HomePage` renders.
+7.3. Add `src/views/Layout.test.tsx`: `Layout` composes `Header`, `Main` and `Footer` in order, with the content inside `Main`, and uses the given `title`.
+7.4. Rewrite `validation.md` around `npm run validate`, keeping only a manual smoke check and a scope review.
+7.5. Run `npm run validate`, then commit.
