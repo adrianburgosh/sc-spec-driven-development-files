@@ -48,3 +48,12 @@
   - `GET /` contains `<header>`, `<main>`, `<footer>` and the stylesheet link
   - `GET /styles.css` returns status 200 with a `text/css` content type
 5.6. Run `npm test` and the manual curl check, then commit.
+
+## 6. One file per layout subcomponent
+
+6.1. Move each layout subcomponent out of `Layout.tsx` into its own file:
+  - `src/views/Header.tsx` exporting `Header`
+  - `src/views/Main.tsx` exporting `Main`
+  - `src/views/Footer.tsx` exporting `Footer`
+6.2. `Layout.tsx` imports `Header`, `Main` and `Footer` and keeps only the document shell and their composition.
+6.3. No change to the rendered HTML: run `npm test` and the manual curl check, then commit.

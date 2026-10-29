@@ -1,26 +1,13 @@
 import type { Child } from 'hono/jsx'
 import { raw } from 'hono/html'
+import { Footer } from './Footer.js'
+import { Header } from './Header.js'
+import { Main } from './Main.js'
 
 type LayoutProps = {
   title: string
   children: Child
 }
-
-export const Header = () => (
-  <header class="site-header">
-    <a class="brand" href="/">
-      AgentClinic
-    </a>
-  </header>
-)
-
-export const Main = ({ children }: { children: Child }) => <main class="site-main">{children}</main>
-
-export const Footer = () => (
-  <footer class="site-footer">
-    <p>Take a deep breath, clear your context, and come back anytime.</p>
-  </footer>
-)
 
 export const Layout = ({ title, children }: LayoutProps) => (
   <>
