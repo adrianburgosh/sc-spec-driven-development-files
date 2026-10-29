@@ -34,3 +34,17 @@
   - a body that contains `Welcome to AgentClinic` and the tagline
 4.2. Run `npm test` (typecheck + Vitest) and fix any failures.
 4.3. Run through `validation.md`, then commit the phase.
+
+## 5. Main layout & stylesheet
+
+5.1. Create `src/views/Layout.tsx` exporting a `Layout` component (props: `title`, `children`) that renders the full HTML document and composes three subcomponents:
+  - `Header`: `<header>` with the clinic name linking to `/`
+  - `Main`: `<main>` wrapping the page content (`children`)
+  - `Footer`: `<footer>` with a short, warm sign-off
+5.2. Move the document shell (`<!DOCTYPE html>`, `<html lang="en">`, `<head>` metas, `<title>`) from `HomePage` into `Layout`; `HomePage` imports `Layout` and only provides its own content.
+5.3. Create `public/styles.css`: clinic colors and typography as CSS custom properties, plus base styles for the header, main and footer.
+5.4. Serve `public/` statically from the app (`serveStatic` from `@hono/node-server/serve-static`) and link the stylesheet from `Layout` with `<link rel="stylesheet" href="/styles.css">`.
+5.5. Extend `src/app.test.ts`:
+  - `GET /` contains `<header>`, `<main>`, `<footer>` and the stylesheet link
+  - `GET /styles.css` returns status 200 with a `text/css` content type
+5.6. Run `npm test` and the manual curl check, then commit.

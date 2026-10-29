@@ -19,7 +19,7 @@ Guidance: `specs/mission.md` (playful, warm tone) and `specs/tech-stack.md` (Hon
 
 ## Out of scope
 
-- Shared layout, header/nav/footer, stylesheet (Phase 2).
+- Navigation menu (Phase 2). The main layout (header/main/footer) and base stylesheet were pulled forward into this phase (plan group 5).
 - Links to pages that don't exist yet (agents, ailments, therapies, appointments).
 - Database, any other routes (Phase 3+).
 - Client-side JavaScript.
