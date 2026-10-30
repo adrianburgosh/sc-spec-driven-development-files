@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-10-30
+
+- Phase 12: Add friendly 404 and 500 pages, shared empty states, home page shortcuts, and accessibility checks on every page (f59d35d)
+- Phase 11: Add staff forms to add and edit agents, ailments (with their agent and therapy links) and therapies (0b33a55)
+- Phase 10: Add the `/staff` dashboard with today's appointments and clinic counts (9a34a52)
+- Phase 9: Add the agent dashboard: my ailments, suggested therapies and upcoming appointments (c5cdad7)
+- Phase 8: Let agents cancel upcoming appointments, freeing the slot (7527446)
+- Phase 7: Add the booking form with validation and database-enforced double-booking protection (76c7ce3)
+- Phase 6: Add appointments on hourly weekday slots and the `/appointments` page (2d80905)
+- Phase 5: Recommend therapies for each ailment on `/ailments` (ae08f2d)
+- Phase 4: Add therapies and the `/therapies` page (9531d42)
+- Phase 3: Link agents to ailments and show them on the agent profile (849c6fc)
+- Add the MVP feature spec for Phases 3–12 (0b0cc6b)
+
 ## 2026-10-29
 
 - Move the `Agent`/`Ailment` types to `src/types.ts` so views don't import from `src/db/`, and fix stale `tech-stack.md` text (42d1769)
