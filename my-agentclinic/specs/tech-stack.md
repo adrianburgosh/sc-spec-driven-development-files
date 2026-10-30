@@ -30,7 +30,8 @@ Guiding principle: a popular, reliable, TypeScript-first stack with as few movin
 ## Data
 
 - **SQLite** as the database (a single file, zero ops), through Node's built-in **`node:sqlite`** (`DatabaseSync`). There is no native dependency and nothing to compile at install time.
-- Accessed through a thin, typed data-access layer; schema created/migrated from SQL files at startup.
+- Accessed through a thin, typed data-access layer; schema created/migrated at startup from an idempotent `src/db/schema.sql` (copied next to the built code by `npm run build`).
+- File paths (schema, `public/`, Pico) are resolved from the code's own location, so the app runs from any working directory.
 
 ## Testing & quality
 
@@ -51,7 +52,9 @@ Guiding principle: a popular, reliable, TypeScript-first stack with as few movin
 ```
 src/
   index.ts        # server entry
-  app.ts          # Hono app + routes
+  app.tsx         # Hono app + routes (createApp(db))
+  paths.ts        # project-root path helper
+  types.ts        # domain types shared by db/ and views/
   views/          # JSX layouts and pages
   db/             # SQLite access + schema
 public/

@@ -1,4 +1,4 @@
-import type { Agent } from '../db/types.js'
+import type { Agent } from '../types.js'
 import { Layout } from './Layout.js'
 
 const formatDate = (isoDate: string) =>

@@ -1,4 +1,4 @@
-import type { Ailment } from '../db/types.js'
+import type { Ailment } from '../types.js'
 import { Layout } from './Layout.js'
 
 type AilmentsPageProps = {

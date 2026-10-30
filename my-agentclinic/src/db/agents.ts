@@ -1,5 +1,5 @@
 import type { Db } from './index.js'
-import type { Agent } from './types.js'
+import type { Agent } from '../types.js'
 
 const columns = 'id, name, model, role, bio, checked_in_on AS checkedInOn'
 

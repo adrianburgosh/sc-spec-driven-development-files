@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url'
 import { dbPath, openDb, type Db } from './index.js'
-import type { Agent, Ailment } from './types.js'
+import type { Agent, Ailment } from '../types.js'
 
 export const seedAgents: Omit<Agent, 'id'>[] = [
   {
