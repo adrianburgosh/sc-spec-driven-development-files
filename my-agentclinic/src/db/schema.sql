@@ -21,3 +21,10 @@ CREATE TABLE IF NOT EXISTS agent_ailments (
   ailment_id INTEGER NOT NULL REFERENCES ailments (id) ON DELETE CASCADE,
   PRIMARY KEY (agent_id, ailment_id)
 );
+
+CREATE TABLE IF NOT EXISTS therapies (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  duration_minutes INTEGER NOT NULL CHECK (duration_minutes > 0)
+);

@@ -15,3 +15,10 @@ export type Ailment = {
   description: string
   severity: Severity
 }
+
+export type Therapy = {
+  id: number
+  name: string
+  description: string
+  durationMinutes: number
+}

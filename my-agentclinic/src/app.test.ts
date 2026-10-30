@@ -5,6 +5,7 @@ import { listAgents } from './db/agents.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import { openDb } from './db/index.js'
 import { seed } from './db/seed.js'
+import { listTherapies } from './db/therapies.js'
 import { HomePage } from './views/HomePage.js'
 
 const escapeHtml = (text: string) =>
@@ -149,6 +150,27 @@ describe('GET /ailments', () => {
 
   it('shows an empty state when there are no ailments', async () => {
     const body = await (await createApp(openDb(':memory:')).request('/ailments')).text()
+
+    expect(body).toContain('class="empty-state"')
+  })
+})
+
+describe('GET /therapies', () => {
+  it('lists every therapy with its duration and an anchor', async () => {
+    const res = await app.request('/therapies')
+    const body = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(body).toContain('<a href="/therapies" aria-current="page">Therapies</a>')
+    for (const therapy of listTherapies(db)) {
+      expect(body).toContain(`<article id="therapy-${therapy.id}"><h2>${escapeHtml(therapy.name)}</h2>`)
+      expect(body).toContain(escapeHtml(therapy.description))
+      expect(body).toContain(`${therapy.durationMinutes} min`)
+    }
+  })
+
+  it('shows an empty state when there are no therapies', async () => {
+    const body = await (await createApp(openDb(':memory:')).request('/therapies')).text()
 
     expect(body).toContain('class="empty-state"')
   })

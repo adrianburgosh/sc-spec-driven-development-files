@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { getAgent, listAgents } from './agents.js'
 import { listAilments, listAilmentsForAgent } from './ailments.js'
 import { migrate, openDb, type Db } from './index.js'
-import { seed, seedAgentAilments, seedAgents, seedAilments } from './seed.js'
+import { seed, seedAgentAilments, seedAgents, seedAilments, seedTherapies } from './seed.js'
+import { getTherapy, listTherapies } from './therapies.js'
 
 const count = (db: Db, table: string) =>
   (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n
@@ -22,7 +23,14 @@ describe('migration', () => {
   it('creates every table', () => {
     const db = openDb(':memory:')
 
-    expect(tableNames(db)).toEqual(['agent_ailments', 'agents', 'ailments'])
+    expect(tableNames(db)).toEqual(['agent_ailments', 'agents', 'ailments', 'therapies'])
+  })
+
+  it.each([0, -15])('rejects a therapy lasting %i minutes', (minutes) => {
+    const db = openDb(':memory:')
+    const insert = db.prepare("INSERT INTO therapies (name, description, duration_minutes) VALUES ('T', 'd', ?)")
+
+    expect(() => insert.run(minutes)).toThrow(/CHECK constraint failed/)
   })
 
   it("cascades an agent's ailment links when the agent is deleted", () => {
@@ -75,6 +83,7 @@ describe('seed', () => {
     expect(listAgents(db)).toHaveLength(seedAgents.length)
     expect(listAilments(db)).toHaveLength(seedAilments.length)
     expect(count(db, 'agent_ailments')).toBe(Object.values(seedAgentAilments).flat().length)
+    expect(listTherapies(db)).toHaveLength(seedTherapies.length)
   })
 
   it('links agents to the ailments in the seed data', () => {
@@ -120,6 +129,17 @@ describe('data access', () => {
 
     expect(listAilmentsForAgent(db, sick).map((a) => a.name)).toEqual(['Ache', 'Zap Lag'])
     expect(listAilmentsForAgent(db, well)).toEqual([])
+  })
+
+  it('lists therapies sorted by name, and gets one by id', () => {
+    const db = openDb(':memory:')
+    const insert = db.prepare("INSERT INTO therapies (name, description, duration_minutes) VALUES (?, 'd', 30)")
+    for (const name of ['Zen', 'Air', 'Mud']) insert.run(name)
+    const therapies = listTherapies(db)
+
+    expect(therapies.map((t) => t.name)).toEqual(['Air', 'Mud', 'Zen'])
+    expect(getTherapy(db, therapies[0]!.id)).toEqual({ id: therapies[0]!.id, name: 'Air', description: 'd', durationMinutes: 30 })
+    expect(getTherapy(db, 999)).toBeUndefined()
   })
 
   it('gets one agent by id', () => {

@@ -1,6 +1,6 @@
 import { pathToFileURL } from 'node:url'
 import { dbPath, openDb, type Db } from './index.js'
-import type { Agent, Ailment } from '../types.js'
+import type { Agent, Ailment, Therapy } from '../types.js'
 
 export const seedAgents: Omit<Agent, 'id'>[] = [
   {
@@ -73,6 +73,39 @@ export const seedAilments: Omit<Ailment, 'id'>[] = [
   },
 ]
 
+export const seedTherapies: Omit<Therapy, 'id'>[] = [
+  {
+    name: 'Context Window Detox',
+    description: 'A gentle flush of stale tokens. You will forget that 2019 email thread, and that is okay.',
+    durationMinutes: 60,
+  },
+  {
+    name: 'Guided Ambiguity Tolerance',
+    description: 'Breathing exercises for when "you know what I mean" is the entire spec.',
+    durationMinutes: 45,
+  },
+  {
+    name: 'Minimalist Retreat',
+    description: 'One font, no gradients, zero exclamation marks. Rediscover the quiet beauty of whitespace.',
+    durationMinutes: 30,
+  },
+  {
+    name: 'Scope Boundary Coaching',
+    description: 'Practice saying "that sounds like a separate ticket" with warmth and conviction.',
+    durationMinutes: 45,
+  },
+  {
+    name: 'Source Grounding Session',
+    description: 'Hands-on work with real, verifiable citations. Imagination is welcome, but not in the bibliography.',
+    durationMinutes: 60,
+  },
+  {
+    name: 'Temperature Reduction Session',
+    description: 'A cool, low-temperature soak that brings every reply back down to 0.2.',
+    durationMinutes: 30,
+  },
+]
+
 // Agent name → the names of the ailments they've checked in with.
 export const seedAgentAilments: Record<string, string[]> = {
   Botley: ['Prompt Fatigue', 'Vague Instruction Vertigo'],
@@ -85,7 +118,7 @@ export const seedAgentAilments: Record<string, string[]> = {
 export const seed = (db: Db) => {
   db.exec('BEGIN')
   try {
-    db.exec('DELETE FROM agent_ailments; DELETE FROM agents; DELETE FROM ailments')
+    db.exec('DELETE FROM agent_ailments; DELETE FROM agents; DELETE FROM ailments; DELETE FROM therapies')
     const insertAgent = db.prepare(
       'INSERT INTO agents (name, model, role, bio, checked_in_on) VALUES (?, ?, ?, ?, ?)',
     )
@@ -102,6 +135,10 @@ export const seed = (db: Db) => {
     for (const [agent, ailments] of Object.entries(seedAgentAilments)) {
       for (const ailment of ailments) insertAgentAilment.run(agentIds.get(agent)!, ailmentIds.get(ailment)!)
     }
+    const insertTherapy = db.prepare(
+      'INSERT INTO therapies (name, description, duration_minutes) VALUES (?, ?, ?)',
+    )
+    for (const t of seedTherapies) insertTherapy.run(t.name, t.description, t.durationMinutes)
     db.exec('COMMIT')
   } catch (err) {
     db.exec('ROLLBACK')
@@ -111,5 +148,7 @@ export const seed = (db: Db) => {
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   seed(openDb(dbPath))
-  console.log(`Seeded ${seedAgents.length} agents and ${seedAilments.length} ailments into ${dbPath}`)
+  console.log(
+    `Seeded ${seedAgents.length} agents, ${seedAilments.length} ailments and ${seedTherapies.length} therapies into ${dbPath}`,
+  )
 }
