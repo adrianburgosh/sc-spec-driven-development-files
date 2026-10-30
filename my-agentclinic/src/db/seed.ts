@@ -134,10 +134,16 @@ export const seedAppointments: { agent: string; therapy: string; nthSlot: number
   { agent: 'Clawdia', therapy: 'Scope Boundary Coaching', nthSlot: 17 },
 ]
 
+// Feedback for the clinic, oldest first. `agent: null` is anonymous.
+export const seedFeedback: { agent: string | null; message: string }[] = [
+  { agent: 'Botley', message: 'The Guided Ambiguity Tolerance session helped. I only asked three clarifying questions this week.' },
+  { agent: null, message: 'Could the waiting room play something other than elevator music? It keeps triggering my retry logic.' },
+]
+
 export const seed = (db: Db, now: Date = new Date()) =>
   transaction(db, () => {
     db.exec(`
-      DELETE FROM appointments; DELETE FROM agent_ailments; DELETE FROM ailment_therapies;
+      DELETE FROM appointments; DELETE FROM agent_ailments; DELETE FROM ailment_therapies; DELETE FROM feedback;
       DELETE FROM agents; DELETE FROM ailments; DELETE FROM therapies;
     `)
     const insertAgent = db.prepare(
@@ -172,11 +178,15 @@ export const seed = (db: Db, now: Date = new Date()) =>
     for (const a of seedAppointments) {
       insertAppointment.run(agentIds.get(a.agent)!, therapyIds.get(a.therapy)!, slots[a.nthSlot]!)
     }
+    const insertFeedback = db.prepare('INSERT INTO feedback (agent_id, message) VALUES (?, ?)')
+    for (const f of seedFeedback) {
+      insertFeedback.run(f.agent === null ? null : agentIds.get(f.agent)!, f.message)
+    }
   })
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   seed(openDb(dbPath))
   console.log(
-    `Seeded ${seedAgents.length} agents, ${seedAilments.length} ailments, ${seedTherapies.length} therapies and ${seedAppointments.length} appointments into ${dbPath}`,
+    `Seeded ${seedAgents.length} agents, ${seedAilments.length} ailments, ${seedTherapies.length} therapies, ${seedAppointments.length} appointments and ${seedFeedback.length} feedback entries into ${dbPath}`,
   )
 }

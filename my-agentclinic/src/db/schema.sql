@@ -47,3 +47,11 @@ CREATE TABLE IF NOT EXISTS appointments (
 
 -- One booked appointment per slot, clinic-wide. Cancelled ones don't count, so their slot frees up.
 CREATE UNIQUE INDEX IF NOT EXISTS appointments_booked_slot ON appointments (slot) WHERE status = 'booked';
+
+-- `agent_id` is optional: feedback can be anonymous, and it outlives a deleted agent.
+CREATE TABLE IF NOT EXISTS feedback (
+  id INTEGER PRIMARY KEY,
+  agent_id INTEGER REFERENCES agents (id) ON DELETE SET NULL,
+  message TEXT NOT NULL CHECK (length(trim(message)) BETWEEN 1 AND 1000),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateAgent, validateAilment, validateBooking, validateTherapy } from './validation.js'
+import { validateAgent, validateAilment, validateBooking, validateFeedback, validateTherapy } from './validation.js'
 
 // Local time, so the tests pass in any time zone. 2026-11-02 is a Monday.
 const now = new Date(2026, 10, 2, 10, 30)
@@ -117,5 +117,41 @@ describe('validateTherapy', () => {
 
   it.each(['4', '241', '30.5', '-10', 'forever'])('rejects the duration %s', (durationMinutes) => {
     expectOnlyError(validateTherapy({ ...therapy, durationMinutes }), 'durationMinutes')
+  })
+})
+
+describe('validateFeedback', () => {
+  const context = { agentIds: new Set([1, 2]) }
+
+  it('accepts anonymous feedback, trimmed', () => {
+    expect(validateFeedback({ message: '  More naps, please. ' }, context)).toEqual({
+      ok: true,
+      value: { agentId: null, message: 'More naps, please.' },
+    })
+  })
+
+  it.each(['', '  '])('treats the blank agent %o as anonymous', (agent) => {
+    expect(validateFeedback({ agent, message: 'Hi' }, context)).toMatchObject({ ok: true, value: { agentId: null } })
+  })
+
+  it('accepts feedback from a known agent', () => {
+    expect(validateFeedback({ agent: ' 2 ', message: 'Hi' }, context)).toEqual({
+      ok: true,
+      value: { agentId: 2, message: 'Hi' },
+    })
+  })
+
+  it('accepts a message of exactly 1000 characters', () => {
+    expect(validateFeedback({ message: 'a'.repeat(1000) }, context).ok).toBe(true)
+  })
+
+  it.each([
+    ['message', { message: '' }],
+    ['message', { message: '   ' }],
+    ['message', { message: 'a'.repeat(1001) }],
+    ['agent', { agent: '99', message: 'Hi' }],
+    ['agent', { agent: 'abc', message: 'Hi' }],
+  ])('rejects a bad %s: %o', (field, input) => {
+    expectOnlyError(validateFeedback(input, context), field)
   })
 })

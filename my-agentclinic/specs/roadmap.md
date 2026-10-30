@@ -21,7 +21,7 @@ Phases 13 and later follow `TODO.md`: **Now** is the feedback form. **Next** is 
 
 ## Now: Feedback form
 
-### Phase 13: Store feedback
+### Phase 13: Store feedback ✅ Done
 - Add a `feedback` table: optional agent, message (required, length-limited), created time.
 - Add typed data access to create and list feedback, newest first.
 - Tests: save and list, reject an empty message.

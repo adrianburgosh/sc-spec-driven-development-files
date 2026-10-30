@@ -10,6 +10,7 @@ import {
   updateAilment,
 } from './ailments.js'
 import { clinicCounts } from './clinic.js'
+import { createFeedback, listFeedback } from './feedback.js'
 import { migrate, openDb, transaction, type Db } from './index.js'
 import {
   createAppointment,
@@ -27,6 +28,7 @@ import {
   seedAilments,
   seedAilmentTherapies,
   seedAppointments,
+  seedFeedback,
   seedTherapies,
 } from './seed.js'
 import {
@@ -76,8 +78,29 @@ describe('migration', () => {
       'ailment_therapies',
       'ailments',
       'appointments',
+      'feedback',
       'therapies',
     ])
+  })
+
+  it.each([
+    ['empty', ''],
+    ['blank', '   '],
+    ['1001-character', 'a'.repeat(1001)],
+  ])('rejects an %s feedback message', (_, message) => {
+    const db = openDb(':memory:')
+
+    expect(() => db.prepare('INSERT INTO feedback (message) VALUES (?)').run(message)).toThrow(/CHECK constraint failed/)
+  })
+
+  it('keeps feedback, now anonymous, when its agent is deleted', () => {
+    const db = openDb(':memory:')
+    seed(db)
+    const [first] = listAgents(db)
+    const id = createFeedback(db, { agentId: first!.id, message: 'Thanks!' })
+    db.prepare('DELETE FROM agents WHERE id = ?').run(first!.id)
+
+    expect(listFeedback(db).find((f) => f.id === id)).toMatchObject({ agentId: null, agentName: null, message: 'Thanks!' })
   })
 
   it('rejects an unknown appointment status', () => {
@@ -127,6 +150,7 @@ describe('migration', () => {
     expect(() => migrate(db)).not.toThrow()
     expect(listAgents(db)).toHaveLength(seedAgents.length)
     expect(listAilments(db)).toHaveLength(seedAilments.length)
+    expect(listFeedback(db)).toHaveLength(seedFeedback.length)
   })
 
   it('accepts the known ailment severities', () => {
@@ -164,6 +188,20 @@ describe('seed', () => {
     expect(listTherapies(db)).toHaveLength(seedTherapies.length)
     expect(count(db, 'ailment_therapies')).toBe(Object.values(seedAilmentTherapies).flat().length)
     expect(count(db, 'appointments')).toBe(seedAppointments.length)
+    expect(count(db, 'feedback')).toBe(seedFeedback.length)
+  })
+
+  it('inserts the sample feedback, linked to agents by name or anonymous', () => {
+    const db = openDb(':memory:')
+    seed(db)
+
+    expect(
+      listFeedback(db)
+        .map((f) => ({ agent: f.agentName, message: f.message }))
+        .sort((a, b) => a.message.localeCompare(b.message)),
+    ).toEqual([...seedFeedback].sort((a, b) => a.message.localeCompare(b.message)))
+    expect(seedFeedback.some((f) => f.agent === null)).toBe(true)
+    expect(seedFeedback.some((f) => f.agent !== null)).toBe(true)
   })
 
   it('books the seed appointments on upcoming slots after the seed time', () => {
@@ -456,5 +494,34 @@ describe('data access', () => {
     seed(db)
 
     expect(getAgent(db, 999)).toBeUndefined()
+  })
+
+  it("creates feedback with the agent's name, or anonymous", () => {
+    const db = openDb(':memory:')
+    seed(db)
+    const [agent] = listAgents(db)
+    const signed = createFeedback(db, { agentId: agent!.id, message: 'Signed' })
+    const anonymous = createFeedback(db, { agentId: null, message: 'Anonymous' })
+    const byId = new Map(listFeedback(db).map((f) => [f.id, f]))
+
+    expect(byId.get(signed)).toMatchObject({ agentId: agent!.id, agentName: agent!.name, message: 'Signed' })
+    expect(byId.get(anonymous)).toMatchObject({ agentId: null, agentName: null, message: 'Anonymous' })
+    expect(byId.get(signed)!.createdAt).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+  })
+
+  it('lists feedback newest first, breaking same-second ties by id', () => {
+    const db = openDb(':memory:')
+    const insert = db.prepare('INSERT INTO feedback (message, created_at) VALUES (?, ?)')
+    insert.run('older', '2026-10-30 09:00:00')
+    insert.run('newest', '2026-10-30 11:00:00')
+    insert.run('same second, first', '2026-10-30 10:00:00')
+    insert.run('same second, second', '2026-10-30 10:00:00')
+
+    expect(listFeedback(db).map((f) => f.message)).toEqual([
+      'newest',
+      'same second, second',
+      'same second, first',
+      'older',
+    ])
   })
 })

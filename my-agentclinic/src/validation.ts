@@ -1,6 +1,6 @@
 // Pure form validation. Routes call these with the raw form values; views only render the errors.
 import { isValidSlot, nowKey, upcomingSlots } from './slots.js'
-import type { Agent, Ailment, AilmentLinks, Severity, Therapy } from './types.js'
+import type { Agent, Ailment, AilmentLinks, Feedback, Severity, Therapy } from './types.js'
 
 /** Error messages keyed by field name. `form` is for errors that aren't about one field. */
 export type FormErrors = Partial<Record<string, string>>
@@ -131,4 +131,27 @@ export const validateTherapy = (input: FormValues): Validated<Omit<Therapy, 'id'
     errors.durationMinutes = `Use whole minutes, from ${MIN_DURATION} to ${MAX_DURATION}.`
   }
   return result(errors, () => ({ ...values, durationMinutes }))
+}
+
+export const MAX_FEEDBACK_LENGTH = 1000
+
+type FeedbackContext = {
+  agentIds: Set<number>
+}
+
+/** The agent is optional: a blank one means the feedback is anonymous. */
+export const validateFeedback = (
+  input: FormValues,
+  { agentIds }: FeedbackContext,
+): Validated<Pick<Feedback, 'agentId' | 'message'>> => {
+  const errors: FormErrors = {}
+  const { message } = required(input, errors, { message: 'Tell us what is on your mind.' })
+  if (message.length > MAX_FEEDBACK_LENGTH) {
+    errors.message = `Please keep it under ${MAX_FEEDBACK_LENGTH} characters. Brevity is a virtue, even for LLMs.`
+  }
+  const agentId = toId(input.agent)
+  if (input.agent?.trim() && (agentId === undefined || !agentIds.has(agentId))) {
+    errors.agent = "We couldn't find that agent on our books."
+  }
+  return result(errors, () => ({ agentId: agentId ?? null, message }))
 }

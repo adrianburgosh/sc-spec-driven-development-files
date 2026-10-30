@@ -48,3 +48,12 @@ export type Appointment = {
   therapyId: number
   therapyName: string
 }
+
+/** Feedback for the clinic. `agentId` and `agentName` are null when it's anonymous. */
+export type Feedback = {
+  id: number
+  agentId: number | null
+  agentName: string | null
+  message: string
+  createdAt: string
+}
