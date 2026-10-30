@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { tmpdir } from 'node:os'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createApp } from './app.js'
 import { listAgents } from './db/agents.js'
 import { listAilments } from './db/ailments.js'
@@ -139,6 +140,19 @@ describe('GET /styles.css', () => {
 
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toContain('text/css')
+  })
+})
+
+describe('started from another working directory', () => {
+  const originalCwd = process.cwd()
+  beforeAll(() => process.chdir(tmpdir()))
+  afterAll(() => process.chdir(originalCwd))
+
+  it('still finds the schema and both stylesheets', async () => {
+    const otherApp = createApp(openDb(':memory:'))
+
+    expect((await otherApp.request('/styles.css')).status).toBe(200)
+    expect((await otherApp.request('/pico.min.css')).status).toBe(200)
   })
 })
 

@@ -1,13 +1,15 @@
 import { mkdirSync, readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
+import { fileURLToPath } from 'node:url'
+import { fromRoot } from '../paths.js'
 
 export type Db = DatabaseSync
 
-// Resolved from the project root so it works from both src/ (tsx) and dist/ (build).
-const schemaPath = resolve('src/db/schema.sql')
+// Next to this module: src/db/ under tsx, dist/db/ after `npm run build` copies it.
+const schemaPath = fileURLToPath(new URL('./schema.sql', import.meta.url))
 
-export const dbPath = process.env.DB_PATH ?? 'data/agentclinic.db'
+export const dbPath = process.env.DB_PATH ?? fromRoot('data/agentclinic.db')
 
 export const migrate = (db: Db) => {
   db.exec(readFileSync(schemaPath, 'utf8'))

@@ -3,6 +3,7 @@ import { serveStatic } from '@hono/node-server/serve-static'
 import { getAgent, listAgents } from './db/agents.js'
 import { listAilments } from './db/ailments.js'
 import type { Db } from './db/index.js'
+import { fromRoot } from './paths.js'
 import { AgentNotFoundPage } from './views/AgentNotFoundPage.js'
 import { AgentPage } from './views/AgentPage.js'
 import { AgentsPage } from './views/AgentsPage.js'
@@ -12,8 +13,8 @@ import { HomePage } from './views/HomePage.js'
 export const createApp = (db: Db) => {
   const app = new Hono()
 
-  app.get('/pico.min.css', serveStatic({ path: './node_modules/@picocss/pico/css/pico.min.css' }))
-  app.use('/*', serveStatic({ root: './public' }))
+  app.get('/pico.min.css', serveStatic({ path: fromRoot('node_modules/@picocss/pico/css/pico.min.css') }))
+  app.use('/*', serveStatic({ root: fromRoot('public') }))
 
   app.get('/', (c) => c.html(<HomePage />))
 
