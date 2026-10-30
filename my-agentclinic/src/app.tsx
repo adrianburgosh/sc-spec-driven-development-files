@@ -1,10 +1,12 @@
 import { Hono } from 'hono'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { getAgent, listAgents } from './db/agents.js'
+import { listAilments } from './db/ailments.js'
 import type { Db } from './db/index.js'
 import { AgentNotFoundPage } from './views/AgentNotFoundPage.js'
 import { AgentPage } from './views/AgentPage.js'
 import { AgentsPage } from './views/AgentsPage.js'
+import { AilmentsPage } from './views/AilmentsPage.js'
 import { HomePage } from './views/HomePage.js'
 
 export const createApp = (db: Db) => {
@@ -22,6 +24,8 @@ export const createApp = (db: Db) => {
     const agent = /^\d+$/.test(id) ? getAgent(db, Number(id)) : undefined
     return agent ? c.html(<AgentPage agent={agent} />) : c.html(<AgentNotFoundPage />, 404)
   })
+
+  app.get('/ailments', (c) => c.html(<AilmentsPage ailments={listAilments(db)} />))
 
   return app
 }

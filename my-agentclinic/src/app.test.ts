@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createApp } from './app.js'
 import { listAgents } from './db/agents.js'
+import { listAilments } from './db/ailments.js'
 import { openDb } from './db/index.js'
 import { seed } from './db/seed.js'
 import { HomePage } from './views/HomePage.js'
@@ -108,6 +109,27 @@ describe('GET /agents/:id', () => {
     expect(res.status).toBe(404)
     expect(main).toContain('Agent not found')
     expect(main).toContain('href="/agents"')
+  })
+})
+
+describe('GET /ailments', () => {
+  it('lists every ailment with its description and severity', async () => {
+    const res = await app.request('/ailments')
+    const body = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toContain('text/html')
+    for (const ailment of listAilments(db)) {
+      expect(body).toContain(`<h2>${escapeHtml(ailment.name)}</h2>`)
+      expect(body).toContain(escapeHtml(ailment.description))
+      expect(body).toContain(`<span class="badge badge-${ailment.severity}">${ailment.severity}</span>`)
+    }
+  })
+
+  it('shows an empty state when there are no ailments', async () => {
+    const body = await (await createApp(openDb(':memory:')).request('/ailments')).text()
+
+    expect(body).toContain('class="empty-state"')
   })
 })
 
