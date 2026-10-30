@@ -14,11 +14,19 @@ describe('GET /', () => {
     const body = await (await app.request('/')).text()
 
     expect(body.startsWith('<!DOCTYPE html>')).toBe(true)
-    expect(body).toContain('<html lang="en">')
+    expect(body).toContain('<html lang="en" data-theme="light">')
     expect(body).toContain('<meta charset="utf-8"/>')
     expect(body).toContain('<meta name="viewport" content="width=device-width, initial-scale=1"/>')
     expect(body).toContain('<title>AgentClinic</title>')
     expect(body).toContain('<link rel="stylesheet" href="/styles.css"/>')
+  })
+
+  it('links Pico before the clinic stylesheet', async () => {
+    const body = await (await app.request('/')).text()
+    const pico = body.indexOf('<link rel="stylesheet" href="/pico.min.css"/>')
+
+    expect(pico).toBeGreaterThan(-1)
+    expect(pico).toBeLessThan(body.indexOf('<link rel="stylesheet" href="/styles.css"/>'))
   })
 
   it('renders a header with the clinic name linking home', async () => {
@@ -52,6 +60,15 @@ describe('GET /', () => {
 describe('GET /styles.css', () => {
   it('serves the stylesheet', async () => {
     const res = await app.request('/styles.css')
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toContain('text/css')
+  })
+})
+
+describe('GET /pico.min.css', () => {
+  it('serves Pico CSS', async () => {
+    const res = await app.request('/pico.min.css')
 
     expect(res.status).toBe(200)
     expect(res.headers.get('content-type')).toContain('text/css')

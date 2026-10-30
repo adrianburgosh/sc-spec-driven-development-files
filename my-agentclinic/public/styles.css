@@ -1,6 +1,7 @@
-/* Mobile-first: base styles target small screens; wider screens are layered on with min-width queries. */
+/* Clinic theme on top of Pico CSS (loaded first from /pico.min.css).
+   Mobile-first: base styles target small screens; wider screens are layered on with min-width queries. */
 
-:root {
+:root[data-theme="light"] {
   --color-bg: #f6fbfa;
   --color-surface: #ffffff;
   --color-text: #1f2d2b;
@@ -16,51 +17,61 @@
   --space-md: 1rem;
   --space-lg: 2rem;
   --gutter: var(--space-md);
-  --max-width: 48rem;
+  --max-width: 60rem;
   --radius: 0.75rem;
+
+  /* Map the clinic palette onto Pico. */
+  --pico-font-family: var(--font-body);
+  --pico-background-color: var(--color-bg);
+  --pico-color: var(--color-text);
+  --pico-muted-color: var(--color-muted);
+  --pico-primary: var(--color-primary-dark);
+  --pico-primary-background: var(--color-primary);
+  --pico-primary-border: var(--color-primary);
+  --pico-primary-underline: rgb(31 138 122 / 0.5);
+  --pico-primary-hover: var(--color-primary);
+  --pico-primary-hover-background: var(--color-primary-dark);
+  --pico-primary-hover-border: var(--color-primary-dark);
+  --pico-primary-hover-underline: var(--color-primary);
+  --pico-primary-focus: rgb(31 138 122 / 0.4);
+  --pico-primary-inverse: #fff;
+  --pico-card-background-color: var(--color-surface);
+  --pico-border-radius: var(--radius);
+  --pico-h1-color: var(--color-primary-dark);
+  --pico-h2-color: var(--color-primary-dark);
+  --pico-h3-color: var(--color-primary-dark);
 }
 
 @media (min-width: 40rem) {
-  :root {
+  :root[data-theme="light"] {
     --gutter: var(--space-lg);
   }
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
 body {
-  margin: 0;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-body);
-  line-height: 1.6;
   overflow-wrap: break-word;
 }
 
-img,
-svg,
-video {
-  max-width: 100%;
-  height: auto;
+h1,
+h2,
+h3 {
+  font-family: var(--font-heading);
 }
 
 h1 {
-  font-family: var(--font-heading);
   font-size: clamp(1.75rem, 1.25rem + 2.5vw, 2.5rem);
-  color: var(--color-primary-dark);
-  line-height: 1.2;
 }
 
 .site-header {
-  padding: var(--space-md) var(--gutter);
+  padding: var(--space-sm) var(--gutter);
   background: var(--color-primary);
+
+  & nav {
+    flex-wrap: wrap;
+  }
 
   & .brand {
     color: var(--color-surface);
@@ -69,9 +80,35 @@ h1 {
     font-weight: 700;
     text-decoration: none;
   }
+
+  & .nav-links a {
+    color: var(--color-surface);
+    text-decoration: none;
+
+    &[aria-current="page"] {
+      text-decoration: underline;
+      text-decoration-color: var(--color-accent);
+      text-decoration-thickness: 0.15em;
+      text-underline-offset: 0.3em;
+      font-weight: 700;
+    }
+  }
 }
 
-.site-main {
+/* Phones: links drop below the brand. */
+.site-header .nav-links {
+  width: 100%;
+  margin-inline-start: 0;
+}
+
+@media (min-width: 40rem) {
+  .site-header .nav-links {
+    width: auto;
+    margin-inline-start: auto;
+  }
+}
+
+body > main.site-main {
   flex: 1;
   width: min(100% - 2 * var(--gutter), var(--max-width));
   margin: var(--gutter) auto;
@@ -91,4 +128,61 @@ h1 {
   color: var(--color-muted);
   text-align: center;
   font-size: 0.9rem;
+}
+
+/* Card lists: one column on phones, as many as fit on wider screens. */
+.card-grid {
+  display: grid;
+  gap: var(--space-md);
+  padding: 0;
+  list-style: none;
+
+  & > li {
+    list-style: none;
+  }
+
+  & article {
+    height: 100%;
+    margin: 0;
+  }
+}
+
+@media (min-width: 40rem) {
+  .card-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  }
+}
+
+.card-meta {
+  color: var(--color-muted);
+  margin-bottom: 0;
+}
+
+.empty-state {
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: capitalize;
+
+  &.badge-mild {
+    background: #d8f3ee;
+    color: #0f5247;
+  }
+
+  &.badge-moderate {
+    background: #fff0c2;
+    color: #6b4a00;
+  }
+
+  &.badge-severe {
+    background: #ffe0d6;
+    color: #8a2a10;
+  }
 }
