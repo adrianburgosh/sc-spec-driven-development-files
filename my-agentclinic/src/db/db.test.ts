@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { getAgent, listAgents } from './agents.js'
 import { listAilments, listAilmentsForAgent } from './ailments.js'
 import { migrate, openDb, type Db } from './index.js'
-import { seed, seedAgentAilments, seedAgents, seedAilments, seedTherapies } from './seed.js'
-import { getTherapy, listTherapies } from './therapies.js'
+import { seed, seedAgentAilments, seedAgents, seedAilments, seedAilmentTherapies, seedTherapies } from './seed.js'
+import { getTherapy, listTherapies, listTherapiesByAilment, listTherapiesForAilment } from './therapies.js'
 
 const count = (db: Db, table: string) =>
   (db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get() as { n: number }).n
@@ -23,7 +23,7 @@ describe('migration', () => {
   it('creates every table', () => {
     const db = openDb(':memory:')
 
-    expect(tableNames(db)).toEqual(['agent_ailments', 'agents', 'ailments', 'therapies'])
+    expect(tableNames(db)).toEqual(['agent_ailments', 'agents', 'ailment_therapies', 'ailments', 'therapies'])
   })
 
   it.each([0, -15])('rejects a therapy lasting %i minutes', (minutes) => {
@@ -84,6 +84,18 @@ describe('seed', () => {
     expect(listAilments(db)).toHaveLength(seedAilments.length)
     expect(count(db, 'agent_ailments')).toBe(Object.values(seedAgentAilments).flat().length)
     expect(listTherapies(db)).toHaveLength(seedTherapies.length)
+    expect(count(db, 'ailment_therapies')).toBe(Object.values(seedAilmentTherapies).flat().length)
+  })
+
+  it('gives every ailment at least one therapy', () => {
+    const db = openDb(':memory:')
+    seed(db)
+
+    for (const ailment of listAilments(db)) {
+      expect(listTherapiesForAilment(db, ailment.id).map((t) => t.name)).toEqual(
+        [...seedAilmentTherapies[ailment.name]!].sort(),
+      )
+    }
   })
 
   it('links agents to the ailments in the seed data', () => {
@@ -140,6 +152,18 @@ describe('data access', () => {
     expect(therapies.map((t) => t.name)).toEqual(['Air', 'Mud', 'Zen'])
     expect(getTherapy(db, therapies[0]!.id)).toEqual({ id: therapies[0]!.id, name: 'Air', description: 'd', durationMinutes: 30 })
     expect(getTherapy(db, 999)).toBeUndefined()
+  })
+
+  it('maps every ailment to the same therapies as the single-ailment lookup', () => {
+    const db = openDb(':memory:')
+    seed(db)
+    insertAilment(db, 'Untreated Glitch', 'mild')
+    const byAilment = listTherapiesByAilment(db)
+
+    for (const ailment of listAilments(db)) {
+      expect(byAilment.get(ailment.id) ?? []).toEqual(listTherapiesForAilment(db, ailment.id))
+    }
+    expect(byAilment.has(listAilments(db).find((a) => a.name === 'Untreated Glitch')!.id)).toBe(false)
   })
 
   it('gets one agent by id', () => {

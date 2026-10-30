@@ -5,7 +5,7 @@ import { listAgents } from './db/agents.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import { openDb } from './db/index.js'
 import { seed } from './db/seed.js'
-import { listTherapies } from './db/therapies.js'
+import { listTherapies, listTherapiesForAilment } from './db/therapies.js'
 import { HomePage } from './views/HomePage.js'
 
 const escapeHtml = (text: string) =>
@@ -146,6 +146,26 @@ describe('GET /ailments', () => {
       expect(body).toContain(escapeHtml(ailment.description))
       expect(body).toContain(`<span class="badge badge-${ailment.severity}">${ailment.severity}</span>`)
     }
+  })
+
+  it("shows each ailment's recommended therapies under that ailment", async () => {
+    const body = await (await app.request('/ailments')).text()
+    const cards = body.split('<article>').slice(1)
+
+    for (const ailment of listAilments(db)) {
+      const card = cards.find((c) => c.startsWith(`<h2>${escapeHtml(ailment.name)}</h2>`))!
+      const linked = [...card.matchAll(/href="\/therapies#therapy-(\d+)"/g)].map(([, id]) => Number(id))
+
+      expect(linked).toEqual(listTherapiesForAilment(db, ailment.id).map((t) => t.id))
+    }
+  })
+
+  it('says when an ailment has no therapy yet', async () => {
+    const bareDb = openDb(':memory:')
+    bareDb.exec("INSERT INTO ailments (name, description, severity) VALUES ('Lonely Lag', 'd', 'mild')")
+    const body = await (await createApp(bareDb).request('/ailments')).text()
+
+    expect(body).toContain('No therapy yet')
   })
 
   it('shows an empty state when there are no ailments', async () => {

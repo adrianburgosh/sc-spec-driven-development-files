@@ -115,10 +115,23 @@ export const seedAgentAilments: Record<string, string[]> = {
   Mistrel: ['Prompt Fatigue'],
 }
 
+// Ailment name → the names of the therapies that treat it.
+export const seedAilmentTherapies: Record<string, string[]> = {
+  'Chronic Hallucination': ['Source Grounding Session', 'Temperature Reduction Session'],
+  'Context Window Claustrophobia': ['Context Window Detox'],
+  'Infinite Tweak Loop': ['Scope Boundary Coaching'],
+  'Make-It-Pop Syndrome': ['Minimalist Retreat', 'Temperature Reduction Session'],
+  'Prompt Fatigue': ['Context Window Detox', 'Guided Ambiguity Tolerance'],
+  'Vague Instruction Vertigo': ['Guided Ambiguity Tolerance', 'Scope Boundary Coaching'],
+}
+
 export const seed = (db: Db) => {
   db.exec('BEGIN')
   try {
-    db.exec('DELETE FROM agent_ailments; DELETE FROM agents; DELETE FROM ailments; DELETE FROM therapies')
+    db.exec(`
+      DELETE FROM agent_ailments; DELETE FROM ailment_therapies;
+      DELETE FROM agents; DELETE FROM ailments; DELETE FROM therapies;
+    `)
     const insertAgent = db.prepare(
       'INSERT INTO agents (name, model, role, bio, checked_in_on) VALUES (?, ?, ?, ?, ?)',
     )
@@ -138,7 +151,14 @@ export const seed = (db: Db) => {
     const insertTherapy = db.prepare(
       'INSERT INTO therapies (name, description, duration_minutes) VALUES (?, ?, ?)',
     )
-    for (const t of seedTherapies) insertTherapy.run(t.name, t.description, t.durationMinutes)
+    const therapyIds = new Map<string, number>()
+    for (const t of seedTherapies) {
+      therapyIds.set(t.name, Number(insertTherapy.run(t.name, t.description, t.durationMinutes).lastInsertRowid))
+    }
+    const insertAilmentTherapy = db.prepare('INSERT INTO ailment_therapies (ailment_id, therapy_id) VALUES (?, ?)')
+    for (const [ailment, therapies] of Object.entries(seedAilmentTherapies)) {
+      for (const therapy of therapies) insertAilmentTherapy.run(ailmentIds.get(ailment)!, therapyIds.get(therapy)!)
+    }
     db.exec('COMMIT')
   } catch (err) {
     db.exec('ROLLBACK')
