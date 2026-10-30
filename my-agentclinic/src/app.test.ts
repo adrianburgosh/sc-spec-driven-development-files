@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { createApp } from './app.js'
+import { listAgents } from './db/agents.js'
 import { openDb } from './db/index.js'
 import { seed } from './db/seed.js'
 import { HomePage } from './views/HomePage.js'
 
-const seededDb = () => {
-  const db = openDb(':memory:')
-  seed(db)
-  return db
-}
+const escapeHtml = (text: string) =>
+  text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
 
-const app = createApp(seededDb())
+const db = openDb(':memory:')
+seed(db)
+const app = createApp(db)
 
 describe('GET /', () => {
   it('responds with an HTML page', async () => {
@@ -64,6 +64,50 @@ describe('GET /', () => {
     const body = await (await app.request('/')).text()
 
     expect(body).toBe(await HomePage().toString())
+  })
+})
+
+describe('GET /agents', () => {
+  it('lists every agent with a link to their profile', async () => {
+    const res = await app.request('/agents')
+    const body = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('content-type')).toContain('text/html')
+    for (const agent of listAgents(db)) {
+      expect(body).toContain(`<a href="/agents/${agent.id}">${agent.name}</a>`)
+    }
+  })
+
+  it('shows an empty state when there are no agents', async () => {
+    const body = await (await createApp(openDb(':memory:')).request('/agents')).text()
+
+    expect(body).toContain('class="empty-state"')
+  })
+})
+
+describe('GET /agents/:id', () => {
+  it("shows the agent's profile", async () => {
+    const [agent] = listAgents(db)
+    const res = await app.request(`/agents/${agent!.id}`)
+    const body = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(body).toContain(`<h1>${agent!.name}</h1>`)
+    expect(body).toContain(agent!.model)
+    expect(body).toContain(agent!.role)
+    expect(body).toContain(escapeHtml(agent!.bio))
+    expect(body).toContain(`datetime="${agent!.checkedInOn}"`)
+  })
+
+  it.each(['999', 'not-a-number'])('returns a friendly 404 for /agents/%s', async (id) => {
+    const res = await app.request(`/agents/${id}`)
+    const body = await res.text()
+    const main = body.match(/<main[^>]*>(.*)<\/main>/s)?.[1] ?? ''
+
+    expect(res.status).toBe(404)
+    expect(main).toContain('Agent not found')
+    expect(main).toContain('href="/agents"')
   })
 })
 
