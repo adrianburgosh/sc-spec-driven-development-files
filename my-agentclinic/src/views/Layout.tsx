@@ -6,10 +6,11 @@ import { Main } from './Main.js'
 
 type LayoutProps = {
   title: string
+  current?: string
   children: Child
 }
 
-export const Layout = ({ title, children }: LayoutProps) => (
+export const Layout = ({ title, current, children }: LayoutProps) => (
   <>
     {raw('<!DOCTYPE html>')}
     <html lang="en" data-theme="light">
@@ -21,7 +22,7 @@ export const Layout = ({ title, children }: LayoutProps) => (
         <link rel="stylesheet" href="/styles.css" />
       </head>
       <body>
-        <Header />
+        <Header current={current} />
         <Main>{children}</Main>
         <Footer />
       </body>

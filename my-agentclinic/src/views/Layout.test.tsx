@@ -28,4 +28,30 @@ describe('Layout', () => {
 
     expect(page).toContain('<title>Test</title>')
   })
+
+  it('renders the main nav links', async () => {
+    const page = await (<Layout title="Test">{null}</Layout>).toString()
+    const nav = page.match(/<nav aria-label="Main">(.*)<\/nav>/s)?.[1] ?? ''
+
+    expect(nav).toContain('href="/"')
+    expect(nav).toContain('href="/agents"')
+    expect(nav).toContain('href="/ailments"')
+  })
+
+  it('marks only the current page link with aria-current', async () => {
+    const page = await (
+      <Layout title="Test" current="/agents">
+        {null}
+      </Layout>
+    ).toString()
+
+    expect(page.match(/aria-current="page"/g)).toHaveLength(1)
+    expect(page).toContain('<a href="/agents" aria-current="page">Agents</a>')
+  })
+
+  it('marks no link when there is no current page', async () => {
+    const page = await (<Layout title="Test">{null}</Layout>).toString()
+
+    expect(page).not.toContain('aria-current')
+  })
 })

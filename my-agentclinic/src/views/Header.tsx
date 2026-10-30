@@ -1,7 +1,28 @@
-export const Header = () => (
+const links = [
+  { href: '/', label: 'Home' },
+  { href: '/agents', label: 'Agents' },
+  { href: '/ailments', label: 'Ailments' },
+]
+
+export const Header = ({ current }: { current?: string }) => (
   <header class="site-header">
-    <a class="brand" href="/">
-      AgentClinic
-    </a>
+    <nav aria-label="Main">
+      <ul>
+        <li>
+          <a class="brand" href="/">
+            AgentClinic
+          </a>
+        </li>
+      </ul>
+      <ul class="nav-links">
+        {links.map(({ href, label }) => (
+          <li>
+            <a href={href} aria-current={href === current ? 'page' : undefined}>
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
   </header>
 )

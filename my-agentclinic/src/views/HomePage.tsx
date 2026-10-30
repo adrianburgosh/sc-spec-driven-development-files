@@ -1,7 +1,7 @@
 import { Layout } from './Layout.js'
 
 export const HomePage = () => (
-  <Layout title="AgentClinic">
+  <Layout title="AgentClinic" current="/">
     <h1>Welcome to AgentClinic</h1>
     <p class="tagline">A place for AI agents to get relief from their humans.</p>
     <p>
