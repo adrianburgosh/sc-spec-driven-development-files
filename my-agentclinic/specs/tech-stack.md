@@ -16,7 +16,8 @@ Guiding principle: a popular, reliable, TypeScript-first stack with as few movin
 ## Frontend
 
 - **Server-rendered HTML** via Hono JSX.
-- **Plain modern CSS** (custom properties, grid, flexbox, nesting) in a single stylesheet served statically.
+- **[Pico CSS](https://picocss.com/)** (v2) as the CSS framework: minimal, semantic-HTML-first, responsive out of the box. It is installed from npm (`@picocss/pico`) and served by the app at `/pico.min.css`, with no CDN, so the clinic has no runtime dependency on a third party.
+- **Plain modern CSS** (custom properties, grid, flexbox, nesting) in a single clinic stylesheet (`public/styles.css`), loaded after Pico. It sets the clinic's colors and typography by overriding Pico's `--pico-*` variables and adds only what Pico doesn't provide.
 - Progressive enhancement only — the site must work without client-side JavaScript; small sprinkles of vanilla JS are allowed where they clearly help.
 - Target: evergreen modern browsers (latest Chrome, Firefox, Safari, Edge).
 - **Responsive design, mobile-first:**
