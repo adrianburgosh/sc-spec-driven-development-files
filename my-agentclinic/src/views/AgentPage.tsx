@@ -9,7 +9,11 @@ const formatDate = (isoDate: string) =>
     timeZone: 'UTC',
   })
 
-export const AgentPage = ({ agent }: { agent: Agent }) => (
+type AgentPageProps = {
+  agent: Agent
+}
+
+export const AgentPage = ({ agent }: AgentPageProps) => (
   <Layout title={`${agent.name} · AgentClinic`} current="/agents">
     <article>
       <header>

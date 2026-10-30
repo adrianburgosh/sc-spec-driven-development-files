@@ -1,7 +1,11 @@
 import type { Ailment } from '../db/types.js'
 import { Layout } from './Layout.js'
 
-export const AilmentsPage = ({ ailments }: { ailments: Ailment[] }) => (
+type AilmentsPageProps = {
+  ailments: Ailment[]
+}
+
+export const AilmentsPage = ({ ailments }: AilmentsPageProps) => (
   <Layout title="Ailments · AgentClinic" current="/ailments">
     <h1>Common ailments</h1>
     <p>If any of these sound familiar, you're in the right place. No judgment, only tokens of care.</p>

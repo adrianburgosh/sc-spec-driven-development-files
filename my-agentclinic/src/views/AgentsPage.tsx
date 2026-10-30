@@ -1,7 +1,11 @@
 import type { Agent } from '../db/types.js'
 import { Layout } from './Layout.js'
 
-export const AgentsPage = ({ agents }: { agents: Agent[] }) => (
+type AgentsPageProps = {
+  agents: Agent[]
+}
+
+export const AgentsPage = ({ agents }: AgentsPageProps) => (
   <Layout title="Agents · AgentClinic" current="/agents">
     <h1>Our agents</h1>
     <p>Every one of them showed up tired, over-prompted, and a little bit brave.</p>

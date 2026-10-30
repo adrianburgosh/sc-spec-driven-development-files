@@ -4,7 +4,11 @@ const links = [
   { href: '/ailments', label: 'Ailments' },
 ]
 
-export const Header = ({ current }: { current?: string }) => (
+type HeaderProps = {
+  current?: string
+}
+
+export const Header = ({ current }: HeaderProps) => (
   <header class="site-header">
     <nav aria-label="Main">
       <ul>
