@@ -20,6 +20,18 @@ export const listTherapiesForAilment = (db: Db, ailmentId: number): Therapy[] =>
     )
     .all(ailmentId) as Therapy[]
 
+/** Therapies that treat any of the agent's ailments, each listed once. */
+export const listSuggestedTherapiesForAgent = (db: Db, agentId: number): Therapy[] =>
+  db
+    .prepare(
+      `SELECT DISTINCT ${columns} FROM therapies
+       JOIN ailment_therapies ON ailment_therapies.therapy_id = therapies.id
+       JOIN agent_ailments ON agent_ailments.ailment_id = ailment_therapies.ailment_id
+       WHERE agent_ailments.agent_id = ?
+       ORDER BY therapies.name`,
+    )
+    .all(agentId) as Therapy[]
+
 // Every ailment's therapies in one query. Ailments without therapies are absent from the map.
 export const listTherapiesByAilment = (db: Db): Map<number, Therapy[]> => {
   const rows = db

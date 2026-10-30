@@ -16,7 +16,15 @@ export const listUpcomingAppointments = (db: Db, now: Date): Appointment[] =>
     .prepare(`${select} WHERE appointments.status = 'booked' AND appointments.slot > ? ORDER BY appointments.slot`)
     .all(nowKey(now)) as Appointment[]
 
-export const getAppointment = (db: Db, id: number): Appointment | undefined =>
+export const listUpcomingAppointmentsForAgent = (db: Db, agentId: number, now: Date): Appointment[] =>
+  db
+    .prepare(
+      `${select} WHERE appointments.agent_id = ? AND appointments.status = 'booked' AND appointments.slot > ?
+       ORDER BY appointments.slot`,
+    )
+    .all(agentId, nowKey(now)) as Appointment[]
+
+export const getAppointment =(db: Db, id: number): Appointment | undefined =>
   db.prepare(`${select} WHERE appointments.id = ?`).get(id) as Appointment | undefined
 
 /** Upcoming slots that nobody has booked yet. */

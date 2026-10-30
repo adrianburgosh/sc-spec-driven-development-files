@@ -7,6 +7,7 @@ import {
   getAppointment,
   listFreeSlots,
   listUpcomingAppointments,
+  listUpcomingAppointmentsForAgent,
   SlotTakenError,
 } from './appointments.js'
 import {
@@ -18,7 +19,13 @@ import {
   seedAppointments,
   seedTherapies,
 } from './seed.js'
-import { getTherapy, listTherapies, listTherapiesByAilment, listTherapiesForAilment } from './therapies.js'
+import {
+  getTherapy,
+  listSuggestedTherapiesForAgent,
+  listTherapies,
+  listTherapiesByAilment,
+  listTherapiesForAilment,
+} from './therapies.js'
 import { upcomingSlots } from '../slots.js'
 
 // Local time, so the tests pass in any time zone. 2026-11-02 is a Monday.
@@ -294,6 +301,32 @@ describe('data access', () => {
     expect(() => createAppointment(db, { agentId: 1, therapyId: 1, slot: '2026-11-05T15:00' })).toThrow(
       /FOREIGN KEY constraint failed/,
     )
+  })
+
+  it("suggests each therapy for an agent's ailments once, sorted by name", () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    const botley = listAgents(db).find((a) => a.name === 'Botley')!
+
+    // Botley's two ailments both list Guided Ambiguity Tolerance.
+    expect(listSuggestedTherapiesForAgent(db, botley.id).map((t) => t.name)).toEqual([
+      'Context Window Detox',
+      'Guided Ambiguity Tolerance',
+      'Scope Boundary Coaching',
+    ])
+  })
+
+  it("lists only the agent's own upcoming booked appointments", () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    const all = listUpcomingAppointments(db, monday8am)
+    const [first] = all
+
+    expect(listUpcomingAppointmentsForAgent(db, first!.agentId, monday8am)).toEqual(
+      all.filter((a) => a.agentId === first!.agentId),
+    )
+    db.prepare("UPDATE appointments SET status = 'cancelled' WHERE id = ?").run(first!.id)
+    expect(listUpcomingAppointmentsForAgent(db, first!.agentId, monday8am)).toEqual([])
   })
 
   it('gets one agent by id', () => {

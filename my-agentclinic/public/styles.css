@@ -200,6 +200,18 @@ body > main.site-main {
   color: var(--color-text);
 }
 
+/* Dashboards: stacked on phones, side by side when there's room. */
+.dashboard-grid {
+  display: grid;
+  gap: 0 var(--space-lg);
+}
+
+@media (min-width: 48rem) {
+  .dashboard-grid {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  }
+}
+
 /* Appointment rows: time above the details on phones, side by side on wider screens. */
 .appointment-list {
   padding: 0;

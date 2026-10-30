@@ -7,13 +7,15 @@ import {
   createAppointment,
   listFreeSlots,
   listUpcomingAppointments,
+  listUpcomingAppointmentsForAgent,
   SlotTakenError,
 } from './db/appointments.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import type { Db } from './db/index.js'
-import { listTherapies, listTherapiesByAilment } from './db/therapies.js'
+import { listSuggestedTherapiesForAgent, listTherapies, listTherapiesByAilment } from './db/therapies.js'
 import { fromRoot } from './paths.js'
 import { validateBooking, type FormErrors, type FormValues } from './validation.js'
+import { AgentDashboardPage } from './views/AgentDashboardPage.js'
 import { AgentNotFoundPage } from './views/AgentNotFoundPage.js'
 import { AgentPage } from './views/AgentPage.js'
 import { AgentsPage } from './views/AgentsPage.js'
@@ -31,6 +33,9 @@ type AppOptions = {
 
 /** A route or query id, or undefined when it isn't a positive whole number. */
 const parseId = (raw: string | undefined) => (raw && /^\d+$/.test(raw) ? Number(raw) : undefined)
+
+// The only pages a cancel may send you back to, so the form can't be used as an open redirect.
+const CANCEL_REDIRECTS = /^\/(appointments|agents\/\d+\/dashboard)$/
 
 /** The submitted form as plain strings (file uploads are ignored). */
 const readForm = async (c: Context): Promise<FormValues> => {
@@ -54,6 +59,20 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
     return agent
       ? c.html(<AgentPage agent={agent} ailments={listAilmentsForAgent(db, agent.id)} />)
       : c.html(<AgentNotFoundPage />, 404)
+  })
+
+  app.get('/agents/:id/dashboard', (c) => {
+    const id = parseId(c.req.param('id'))
+    const agent = id === undefined ? undefined : getAgent(db, id)
+    if (!agent) return c.html(<AgentNotFoundPage />, 404)
+    return c.html(
+      <AgentDashboardPage
+        agent={agent}
+        ailments={listAilmentsForAgent(db, agent.id)}
+        suggestedTherapies={listSuggestedTherapiesForAgent(db, agent.id)}
+        appointments={listUpcomingAppointmentsForAgent(db, agent.id, now())}
+      />,
+    )
   })
 
   app.get('/ailments', (c) =>
@@ -106,10 +125,11 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
     }
   })
 
-  app.post('/appointments/:id/cancel', (c) => {
+  app.post('/appointments/:id/cancel', async (c) => {
     const id = parseId(c.req.param('id'))
     if (id === undefined || !cancelAppointment(db, id, now())) return c.html(<AppointmentNotFoundPage />, 404)
-    return c.redirect('/appointments', 303)
+    const { redirect = '' } = await readForm(c)
+    return c.redirect(CANCEL_REDIRECTS.test(redirect) ? redirect : '/appointments', 303)
   })
 
   return app

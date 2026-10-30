@@ -7,7 +7,7 @@ import { openDb } from './db/index.js'
 import { getAppointment, listUpcomingAppointments } from './db/appointments.js'
 import { seed, seedAppointments } from './db/seed.js'
 import { formatSlot, upcomingSlots } from './slots.js'
-import { listTherapies, listTherapiesForAilment } from './db/therapies.js'
+import { listSuggestedTherapiesForAgent, listTherapies, listTherapiesForAilment } from './db/therapies.js'
 import { HomePage } from './views/HomePage.js'
 
 const escapeHtml = (text: string) =>
@@ -156,6 +156,86 @@ describe('GET /agents/:id', () => {
     expect(main).toContain('Agent not found')
     expect(main).toContain('href="/agents"')
   })
+})
+
+describe('GET /agents/:id/dashboard', () => {
+  const section = (body: string, id: string) =>
+    body.match(new RegExp(`<section aria-labelledby="${id}">(.*?)</section>`, 's'))?.[1] ?? ''
+
+  it("shows only the agent's ailments, suggested therapies and appointments", async () => {
+    const agents = listAgents(db)
+    const gemmy = agents.find((a) => a.name === 'Gemmy')!
+    const res = await app.request(`/agents/${gemmy.id}/dashboard`)
+    const body = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(body).toContain('<h1>Hi, Gemmy</h1>')
+    expect(body).toContain(`href="/appointments/new?agent=${gemmy.id}"`)
+
+    const ailments = section(body, 'my-ailments')
+    for (const a of listAilments(db)) {
+      const mine = listAilmentsForAgent(db, gemmy.id).some((m) => m.id === a.id)
+      expect(ailments.includes(escapeHtml(a.name)), a.name).toBe(mine)
+    }
+
+    const therapies = section(body, 'suggested-therapies')
+    const suggested = listSuggestedTherapiesForAgent(db, gemmy.id)
+    expect([...therapies.matchAll(/therapy-(\d+)/g)].map(([, id]) => Number(id))).toEqual(suggested.map((t) => t.id))
+
+    const appointments = section(body, 'my-appointments')
+    const upcoming = listUpcomingAppointments(db, NOW)
+    expect(upcoming.some((a) => a.agentId !== gemmy.id)).toBe(true)
+    for (const a of upcoming) {
+      expect(appointments.includes(`datetime="${a.slot}"`)).toBe(a.agentId === gemmy.id)
+    }
+  })
+
+  it('shows an empty state in every section for a brand-new agent', async () => {
+    const newDb = openDb(':memory:')
+    newDb.exec("INSERT INTO agents (name, model, role, bio, checked_in_on) VALUES ('Newbie', 'm', 'r', 'b', '2026-10-29')")
+    const body = await (await createApp(newDb, clock).request('/agents/1/dashboard')).text()
+
+    for (const id of ['my-ailments', 'suggested-therapies', 'my-appointments']) {
+      expect(section(body, id)).toContain('class="empty-state"')
+    }
+  })
+
+  it('is linked from the agent profile', async () => {
+    const [agent] = listAgents(db)
+    const body = await (await app.request(`/agents/${agent!.id}`)).text()
+
+    expect(body).toContain(`href="/agents/${agent!.id}/dashboard"`)
+  })
+
+  it.each(['999', 'not-a-number'])('returns the friendly agent 404 for /agents/%s/dashboard', async (id) => {
+    const res = await app.request(`/agents/${id}/dashboard`)
+
+    expect(res.status).toBe(404)
+    expect(await res.text()).toContain('Agent not found')
+  })
+
+  it('sends a cancel from the dashboard back to the dashboard', async () => {
+    const { freshDb, freshApp: target } = freshApp()
+    const appointment = listUpcomingAppointments(freshDb, NOW)[0]!
+    const dashboard = `/agents/${appointment.agentId}/dashboard`
+    const body = await (await target.request(dashboard)).text()
+
+    expect(body).toContain(`<input type="hidden" name="redirect" value="${dashboard}"/>`)
+    const res = await post(target, `/appointments/${appointment.id}/cancel`, { redirect: dashboard })
+    expect(res.status).toBe(303)
+    expect(res.headers.get('location')).toBe(dashboard)
+  })
+
+  it.each(['https://evil.example', '//evil.example', '/agents/1/../../admin', '/staff'])(
+    'ignores a cancel redirect to %s',
+    async (redirect) => {
+      const { freshDb, freshApp: target } = freshApp()
+      const appointment = listUpcomingAppointments(freshDb, NOW)[0]!
+      const res = await post(target, `/appointments/${appointment.id}/cancel`, { redirect })
+
+      expect(res.headers.get('location')).toBe('/appointments')
+    },
+  )
 })
 
 describe('GET /ailments', () => {

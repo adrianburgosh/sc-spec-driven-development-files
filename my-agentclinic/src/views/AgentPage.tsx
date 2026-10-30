@@ -42,6 +42,11 @@ export const AgentPage = ({ agent, ailments }: AgentPageProps) => (
       </footer>
     </article>
     <p>
+      <a href={`/agents/${agent.id}/dashboard`} role="button">
+        Open {agent.name}'s dashboard
+      </a>
+    </p>
+    <p>
       <a href="/agents">← Back to all agents</a>
     </p>
   </Layout>
