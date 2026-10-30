@@ -5,15 +5,18 @@ import { getAgent, listAgents } from './db/agents.js'
 import {
   cancelAppointment,
   createAppointment,
+  listAppointmentsOn,
   listFreeSlots,
   listUpcomingAppointments,
   listUpcomingAppointmentsForAgent,
   SlotTakenError,
 } from './db/appointments.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
+import { clinicCounts } from './db/clinic.js'
 import type { Db } from './db/index.js'
 import { listSuggestedTherapiesForAgent, listTherapies, listTherapiesByAilment } from './db/therapies.js'
 import { fromRoot } from './paths.js'
+import { toDay } from './slots.js'
 import { validateBooking, type FormErrors, type FormValues } from './validation.js'
 import { AgentDashboardPage } from './views/AgentDashboardPage.js'
 import { AgentNotFoundPage } from './views/AgentNotFoundPage.js'
@@ -24,6 +27,7 @@ import { AppointmentNotFoundPage } from './views/AppointmentNotFoundPage.js'
 import { AppointmentsPage } from './views/AppointmentsPage.js'
 import { BookingPage } from './views/BookingPage.js'
 import { HomePage } from './views/HomePage.js'
+import { StaffDashboardPage } from './views/StaffDashboardPage.js'
 import { TherapiesPage } from './views/TherapiesPage.js'
 
 type AppOptions = {
@@ -123,6 +127,17 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
         409,
       )
     }
+  })
+
+  app.get('/staff', (c) => {
+    const today = toDay(now())
+    return c.html(
+      <StaffDashboardPage
+        today={today}
+        todaysAppointments={listAppointmentsOn(db, today)}
+        counts={clinicCounts(db, now())}
+      />,
+    )
   })
 
   app.post('/appointments/:id/cancel', async (c) => {

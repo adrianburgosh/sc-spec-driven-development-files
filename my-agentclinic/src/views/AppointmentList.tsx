@@ -6,9 +6,11 @@ type AppointmentListProps = {
   highlightId?: number
   /** Where to land after cancelling. Defaults to /appointments. */
   cancelRedirect?: string
+  /** Hide the Cancel buttons (e.g. for a list that includes appointments already under way). */
+  readOnly?: boolean
 }
 
-export const AppointmentList = ({ appointments, highlightId, cancelRedirect }: AppointmentListProps) => (
+export const AppointmentList = ({ appointments, highlightId, cancelRedirect, readOnly }: AppointmentListProps) => (
   <ul class="appointment-list">
     {appointments.map((appointment) => (
       <li class={appointment.id === highlightId ? 'highlight' : undefined}>
@@ -16,16 +18,18 @@ export const AppointmentList = ({ appointments, highlightId, cancelRedirect }: A
         <span>
           <a href={`/agents/${appointment.agentId}`}>{appointment.agentName}</a> · {appointment.therapyName}
         </span>
-        <form method="post" action={`/appointments/${appointment.id}/cancel`}>
-          {cancelRedirect && <input type="hidden" name="redirect" value={cancelRedirect} />}
-          <button
-            type="submit"
-            class="secondary outline"
-            aria-label={`Cancel ${appointment.therapyName} for ${appointment.agentName} on ${formatSlot(appointment.slot)}`}
-          >
-            Cancel
-          </button>
-        </form>
+        {!readOnly && (
+          <form method="post" action={`/appointments/${appointment.id}/cancel`}>
+            {cancelRedirect && <input type="hidden" name="redirect" value={cancelRedirect} />}
+            <button
+              type="submit"
+              class="secondary outline"
+              aria-label={`Cancel ${appointment.therapyName} for ${appointment.agentName} on ${formatSlot(appointment.slot)}`}
+            >
+              Cancel
+            </button>
+          </form>
+        )}
       </li>
     ))}
   </ul>

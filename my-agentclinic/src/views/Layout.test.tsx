@@ -38,6 +38,7 @@ describe('Layout', () => {
     expect(nav).toContain('<a href="/ailments">Ailments</a>')
     expect(nav).toContain('<a href="/therapies">Therapies</a>')
     expect(nav).toContain('<a href="/appointments">Appointments</a>')
+    expect(nav).toContain('<a href="/staff">Staff</a>')
   })
 
   it('marks only the current page link with aria-current', async () => {

@@ -25,6 +25,13 @@ export type Therapy = {
 
 export type AppointmentStatus = 'booked' | 'cancelled'
 
+export type ClinicCounts = {
+  agents: number
+  ailments: number
+  therapies: number
+  upcomingAppointments: number
+}
+
 /** An appointment with the names a page needs to show it. */
 export type Appointment = {
   id: number

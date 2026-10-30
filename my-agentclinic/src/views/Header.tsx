@@ -4,6 +4,7 @@ const links = [
   { href: '/ailments', label: 'Ailments' },
   { href: '/therapies', label: 'Therapies' },
   { href: '/appointments', label: 'Appointments' },
+  { href: '/staff', label: 'Staff' },
 ]
 
 type HeaderProps = {

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { getAgent, listAgents } from './agents.js'
 import { listAilments, listAilmentsForAgent } from './ailments.js'
+import { clinicCounts } from './clinic.js'
 import { migrate, openDb, type Db } from './index.js'
 import {
   createAppointment,
   getAppointment,
+  listAppointmentsOn,
   listFreeSlots,
   listUpcomingAppointments,
   listUpcomingAppointmentsForAgent,
@@ -327,6 +329,32 @@ describe('data access', () => {
     )
     db.prepare("UPDATE appointments SET status = 'cancelled' WHERE id = ?").run(first!.id)
     expect(listUpcomingAppointmentsForAgent(db, first!.agentId, monday8am)).toEqual([])
+  })
+
+  it('lists the booked appointments on one day, past or future, by time', () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    db.exec('DELETE FROM appointments')
+    insertAppointment(db, '2026-11-02T15:00')
+    insertAppointment(db, '2026-11-02T09:00')
+    insertAppointment(db, '2026-11-02T11:00', 'cancelled')
+    insertAppointment(db, '2026-11-03T09:00')
+
+    expect(listAppointmentsOn(db, '2026-11-02').map((a) => a.slot)).toEqual(['2026-11-02T09:00', '2026-11-02T15:00'])
+  })
+
+  it('counts agents, ailments, therapies and upcoming booked appointments', () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    const [first] = listUpcomingAppointments(db, monday8am)
+    db.prepare("UPDATE appointments SET status = 'cancelled' WHERE id = ?").run(first!.id)
+
+    expect(clinicCounts(db, monday8am)).toEqual({
+      agents: seedAgents.length,
+      ailments: seedAilments.length,
+      therapies: seedTherapies.length,
+      upcomingAppointments: seedAppointments.length - 1,
+    })
   })
 
   it('gets one agent by id', () => {

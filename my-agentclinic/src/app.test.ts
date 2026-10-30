@@ -479,6 +479,51 @@ describe('POST /appointments/:id/cancel', () => {
   })
 })
 
+describe('GET /staff', () => {
+  const tile = (body: string, label: string) =>
+    body.match(new RegExp(`>${label}</a></dt><dd>(\\d+)</dd>`))?.[1]
+
+  it('shows clinic counts that match the data', async () => {
+    const res = await app.request('/staff')
+    const body = await res.text()
+
+    expect(res.status).toBe(200)
+    expect(body).toContain('<a href="/staff" aria-current="page">Staff</a>')
+    expect(tile(body, 'Agents')).toBe(String(listAgents(db).length))
+    expect(tile(body, 'Ailments')).toBe(String(listAilments(db).length))
+    expect(tile(body, 'Therapies')).toBe(String(listTherapies(db).length))
+    expect(tile(body, 'Upcoming appointments')).toBe(String(listUpcomingAppointments(db, NOW).length))
+  })
+
+  it("lists today's booked appointments by the injected clock, without cancelled ones or other days", async () => {
+    const { freshDb } = freshApp()
+    const all = listUpcomingAppointments(freshDb, NOW)
+    const today = all.filter((a) => a.slot.startsWith('2026-11-02'))
+    expect(today.length).toBeGreaterThanOrEqual(2)
+    freshDb.prepare("UPDATE appointments SET status = 'cancelled' WHERE id = ?").run(today[1]!.id)
+
+    // Late on Monday: the first appointment has already happened but is still part of today.
+    const lateMonday = createApp(freshDb, { now: () => new Date(2026, 10, 2, 17, 30) })
+    const body = await (await lateMonday.request('/staff')).text()
+    const todaySection = body.match(/<section aria-labelledby="today">(.*?)<\/section>/s)![1]!
+
+    expect(todaySection).toContain('Mon, Nov 2')
+    expect(todaySection).toContain(`datetime="${today[0]!.slot}"`)
+    expect(todaySection).not.toContain(`datetime="${today[1]!.slot}"`)
+    for (const other of all.filter((a) => !a.slot.startsWith('2026-11-02'))) {
+      expect(todaySection).not.toContain(`datetime="${other.slot}"`)
+    }
+    expect(todaySection).not.toContain('/cancel')
+  })
+
+  it('shows an empty state when nothing is booked today', async () => {
+    const tuesday = createApp(openDb(':memory:'), { now: () => new Date(2026, 10, 3, 8, 0) })
+    const body = await (await tuesday.request('/staff')).text()
+
+    expect(body).toContain('class="empty-state"')
+  })
+})
+
 describe('GET /styles.css', () => {
   it('serves the stylesheet', async () => {
     const res = await app.request('/styles.css')
