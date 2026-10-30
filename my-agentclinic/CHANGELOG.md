@@ -2,6 +2,10 @@
 
 ## 2026-10-29
 
+- Move the `Agent`/`Ailment` types to `src/types.ts` so views don't import from `src/db/`, and fix stale `tech-stack.md` text (42d1769)
+- Tighten Phase 2 tests so they fail when sorting, dates, severities or nav links break (175909f)
+- Meet WCAG AA text contrast and show a visible focus ring in the header (bba7146)
+- Run the app from any working directory: schema and static paths resolve from the code (48733ed)
 - Declare view component props as named types (68ed21b)
 - Add the `/ailments` page with mild/moderate/severe badges (95091f4)
 - Add the `/agents` list and `/agents/:id` profile pages, with a friendly 404 (6ca473f)
