@@ -13,6 +13,11 @@
   --color-accent-text: #b8471f;
   /* Pale teal behind a just-booked appointment; body text on it is about 13:1. */
   --color-highlight: #e3f4f1;
+  /* Form errors: deep red, about 6.4:1 on white. */
+  --color-error: #b3261e;
+  --pico-form-element-invalid-border-color: var(--color-error);
+  --pico-form-element-invalid-active-border-color: var(--color-error);
+  --pico-del-color: var(--color-error);
 
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Trebuchet MS", system-ui, sans-serif;
@@ -172,6 +177,27 @@ body > main.site-main {
 .empty-state {
   color: var(--color-muted);
   font-style: italic;
+}
+
+/* Forms: one column at every width, kept to a readable line length. */
+.stacked-form {
+  max-width: 36rem;
+}
+
+.field-error,
+.form-error {
+  color: var(--color-error);
+}
+
+.form-error {
+  font-weight: 700;
+}
+
+.form-success {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-highlight);
+  border-radius: var(--radius);
+  color: var(--color-text);
 }
 
 /* Appointment rows: time above the details on phones, side by side on wider screens. */

@@ -4,9 +4,9 @@ import { createApp } from './app.js'
 import { listAgents } from './db/agents.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import { openDb } from './db/index.js'
-import { listUpcomingAppointments } from './db/appointments.js'
+import { getAppointment, listUpcomingAppointments } from './db/appointments.js'
 import { seed, seedAppointments } from './db/seed.js'
-import { formatSlot } from './slots.js'
+import { formatSlot, upcomingSlots } from './slots.js'
 import { listTherapies, listTherapiesForAilment } from './db/therapies.js'
 import { HomePage } from './views/HomePage.js'
 
@@ -236,6 +236,103 @@ describe('GET /appointments', () => {
     const body = await (await createApp(openDb(':memory:'), clock).request('/appointments')).text()
 
     expect(body).toContain('class="empty-state"')
+  })
+})
+
+describe('GET /appointments/new', () => {
+  it('offers only free future slots', async () => {
+    const res = await app.request('/appointments/new')
+    const body = await res.text()
+    const offered = [...body.matchAll(/<option value="(\d{4}-[^"]+)"/g)].map(([, slot]) => slot)
+    const booked = listUpcomingAppointments(db, NOW).map((a) => a.slot)
+
+    expect(res.status).toBe(200)
+    expect(offered).toEqual(upcomingSlots(NOW).filter((s) => !booked.includes(s)))
+    expect(offered).toHaveLength(upcomingSlots(NOW).length - booked.length)
+  })
+
+  it('labels every control and preselects the agent from ?agent=', async () => {
+    const agent = listAgents(db)[2]!
+    const body = await (await app.request(`/appointments/new?agent=${agent.id}`)).text()
+
+    for (const name of ['agent', 'therapy', 'slot']) {
+      expect(body).toContain(`<label for="${name}">`)
+      expect(body).toContain(`<select id="${name}" name="${name}"`)
+    }
+    expect(body.match(/<option [^>]*selected/g)).toEqual([`<option value="${agent.id}" selected`])
+  })
+
+  it('is linked from /appointments', async () => {
+    const body = await (await app.request('/appointments')).text()
+
+    expect(body).toContain('href="/appointments/new"')
+  })
+})
+
+describe('POST /appointments', () => {
+  const freshApp = () => {
+    const freshDb = openDb(':memory:')
+    seed(freshDb, NOW)
+    return { freshDb, freshApp: createApp(freshDb, clock) }
+  }
+  const book = (target: ReturnType<typeof createApp>, form: Record<string, string>) =>
+    target.request('/appointments', { method: 'POST', body: new URLSearchParams(form) })
+  const countAppointments = (target: typeof db) =>
+    (target.prepare('SELECT COUNT(*) AS n FROM appointments').get() as { n: number }).n
+
+  it('books a free slot and redirects to the highlighted appointment', async () => {
+    const { freshDb, freshApp: target } = freshApp()
+    const [agent] = listAgents(freshDb)
+    const [therapy] = listTherapies(freshDb)
+    const res = await book(target, { agent: String(agent!.id), therapy: String(therapy!.id), slot: '2026-11-03T13:00' })
+
+    expect(res.status).toBe(303)
+    const id = Number(res.headers.get('location')!.match(/^\/appointments\?booked=(\d+)$/)![1])
+    expect(getAppointment(freshDb, id)).toMatchObject({
+      agentId: agent!.id,
+      therapyId: therapy!.id,
+      slot: '2026-11-03T13:00',
+      status: 'booked',
+    })
+
+    const page = await (await target.request(`/appointments?booked=${id}`)).text()
+    expect(page).toContain('<li class="highlight"><time datetime="2026-11-03T13:00">')
+    expect(page).toContain('role="status"')
+  })
+
+  it.each([
+    ['a missing agent', { agent: '' }, 'agent'],
+    ['an unknown agent', { agent: '999' }, 'agent'],
+    ['an unknown therapy', { therapy: '999' }, 'therapy'],
+    ['a past slot', { slot: '2026-10-30T10:00' }, 'slot'],
+    ['a malformed slot', { slot: 'whenever' }, 'slot'],
+  ])('rejects %s with 400 and keeps the values', async (_, override, field) => {
+    const { freshDb, freshApp: target } = freshApp()
+    const before = countAppointments(freshDb)
+    const [agent] = listAgents(freshDb)
+    const therapy = listTherapies(freshDb)[1]!
+    const form = { agent: String(agent!.id), therapy: String(therapy.id), slot: '2026-11-03T13:00', ...override }
+    const res = await book(target, form)
+    const body = await res.text()
+
+    expect(res.status).toBe(400)
+    expect(countAppointments(freshDb)).toBe(before)
+    expect(body).toContain(`aria-invalid="true" aria-describedby="${field}-error"`)
+    expect(body).toContain(`<small id="${field}-error" class="field-error">`)
+    if (field !== 'agent') expect(body).toContain(`<option value="${agent!.id}" selected`)
+    if (field !== 'therapy') expect(body).toContain(`<option value="${therapy.id}" selected`)
+  })
+
+  it('refuses a taken slot with 409 and adds nothing', async () => {
+    const { freshDb, freshApp: target } = freshApp()
+    const taken = listUpcomingAppointments(freshDb, NOW)[0]!
+    const before = countAppointments(freshDb)
+    const res = await book(target, { agent: String(taken.agentId), therapy: String(taken.therapyId), slot: taken.slot })
+    const body = await res.text()
+
+    expect(res.status).toBe(409)
+    expect(countAppointments(freshDb)).toBe(before)
+    expect(body).toContain('that slot was just taken')
   })
 })
 

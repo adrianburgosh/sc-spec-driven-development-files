@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest'
 import { getAgent, listAgents } from './agents.js'
 import { listAilments, listAilmentsForAgent } from './ailments.js'
 import { migrate, openDb, type Db } from './index.js'
-import { getAppointment, listUpcomingAppointments } from './appointments.js'
+import {
+  createAppointment,
+  getAppointment,
+  listFreeSlots,
+  listUpcomingAppointments,
+  SlotTakenError,
+} from './appointments.js'
 import {
   seed,
   seedAgentAilments,
@@ -255,6 +261,39 @@ describe('data access', () => {
     expect(getAppointment(db, first!.id)).toEqual(first)
     expect(first).toMatchObject({ agentName: 'Botley', therapyName: 'Guided Ambiguity Tolerance', status: 'booked' })
     expect(getAppointment(db, 999)).toBeUndefined()
+  })
+
+  it('lists free slots: upcoming ones minus booked ones, with cancelled ones freed', () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    db.exec('DELETE FROM appointments')
+    insertAppointment(db, '2026-11-02T10:00')
+    insertAppointment(db, '2026-11-02T11:00', 'cancelled')
+
+    const free = listFreeSlots(db, monday8am)
+    expect(free).not.toContain('2026-11-02T10:00')
+    expect(free).toContain('2026-11-02T11:00')
+    expect(free).toHaveLength(upcomingSlots(monday8am).length - 1)
+  })
+
+  it('creates an appointment, and throws SlotTakenError for a booked slot', () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    const [agent] = listAgents(db)
+    const [therapy] = listTherapies(db)
+    const booking = { agentId: agent!.id, therapyId: therapy!.id, slot: '2026-11-05T15:00' }
+    const id = createAppointment(db, booking)
+
+    expect(getAppointment(db, id)).toMatchObject({ ...booking, status: 'booked' })
+    expect(() => createAppointment(db, booking)).toThrow(SlotTakenError)
+  })
+
+  it('does not disguise other insert errors as a taken slot', () => {
+    const db = openDb(':memory:')
+
+    expect(() => createAppointment(db, { agentId: 1, therapyId: 1, slot: '2026-11-05T15:00' })).toThrow(
+      /FOREIGN KEY constraint failed/,
+    )
   })
 
   it('gets one agent by id', () => {

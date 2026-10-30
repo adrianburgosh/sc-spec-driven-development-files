@@ -1,22 +1,34 @@
 import { Hono } from 'hono'
+import type { Context } from 'hono'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { getAgent, listAgents } from './db/agents.js'
-import { listUpcomingAppointments } from './db/appointments.js'
+import { createAppointment, listFreeSlots, listUpcomingAppointments, SlotTakenError } from './db/appointments.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import type { Db } from './db/index.js'
 import { listTherapies, listTherapiesByAilment } from './db/therapies.js'
 import { fromRoot } from './paths.js'
+import { validateBooking, type FormErrors, type FormValues } from './validation.js'
 import { AgentNotFoundPage } from './views/AgentNotFoundPage.js'
 import { AgentPage } from './views/AgentPage.js'
 import { AgentsPage } from './views/AgentsPage.js'
 import { AilmentsPage } from './views/AilmentsPage.js'
 import { AppointmentsPage } from './views/AppointmentsPage.js'
+import { BookingPage } from './views/BookingPage.js'
 import { HomePage } from './views/HomePage.js'
 import { TherapiesPage } from './views/TherapiesPage.js'
 
 type AppOptions = {
   /** The clock. Tests pass a fixed time so "upcoming" and "today" are deterministic. */
   now?: () => Date
+}
+
+/** A route or query id, or undefined when it isn't a positive whole number. */
+const parseId = (raw: string | undefined) => (raw && /^\d+$/.test(raw) ? Number(raw) : undefined)
+
+/** The submitted form as plain strings (file uploads are ignored). */
+const readForm = async (c: Context): Promise<FormValues> => {
+  const body = await c.req.parseBody()
+  return Object.fromEntries(Object.entries(body).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : [])))
 }
 
 export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) => {
@@ -30,8 +42,8 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
   app.get('/agents', (c) => c.html(<AgentsPage agents={listAgents(db)} />))
 
   app.get('/agents/:id', (c) => {
-    const id = c.req.param('id')
-    const agent = /^\d+$/.test(id) ? getAgent(db, Number(id)) : undefined
+    const id = parseId(c.req.param('id'))
+    const agent = id === undefined ? undefined : getAgent(db, id)
     return agent
       ? c.html(<AgentPage agent={agent} ailments={listAilmentsForAgent(db, agent.id)} />)
       : c.html(<AgentNotFoundPage />, 404)
@@ -43,7 +55,49 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
 
   app.get('/therapies', (c) => c.html(<TherapiesPage therapies={listTherapies(db)} />))
 
-  app.get('/appointments', (c) => c.html(<AppointmentsPage appointments={listUpcomingAppointments(db, now())} />))
+  app.get('/appointments', (c) =>
+    c.html(
+      <AppointmentsPage appointments={listUpcomingAppointments(db, now())} bookedId={parseId(c.req.query('booked'))} />,
+    ),
+  )
+
+  const renderBooking = (c: Context, values: FormValues, errors: FormErrors, status: 200 | 400 | 409 = 200) =>
+    c.html(
+      <BookingPage
+        agents={listAgents(db)}
+        therapies={listTherapies(db)}
+        freeSlots={listFreeSlots(db, now())}
+        values={values}
+        errors={errors}
+      />,
+      status,
+    )
+
+  app.get('/appointments/new', (c) => renderBooking(c, { agent: c.req.query('agent') ?? '' }, {}))
+
+  app.post('/appointments', async (c) => {
+    const values = await readForm(c)
+    const result = validateBooking(values, {
+      agentIds: new Set(listAgents(db).map((a) => a.id)),
+      therapyIds: new Set(listTherapies(db).map((t) => t.id)),
+      now: now(),
+    })
+    if (!result.ok) return renderBooking(c, values, result.errors, 400)
+    try {
+      return c.redirect(`/appointments?booked=${createAppointment(db, result.value)}`, 303)
+    } catch (err) {
+      if (!(err instanceof SlotTakenError)) throw err
+      return renderBooking(
+        c,
+        values,
+        {
+          form: 'Oh no, that slot was just taken by another agent. Please pick a different time.',
+          slot: 'This slot is no longer free.',
+        },
+        409,
+      )
+    }
+  })
 
   return app
 }

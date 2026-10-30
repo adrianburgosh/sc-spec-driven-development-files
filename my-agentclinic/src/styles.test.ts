@@ -37,6 +37,7 @@ describe('styles.css text contrast (WCAG AA)', () => {
     ['the tagline on the main card', '--color-accent-text', '--color-surface'],
     ['body text on a highlighted appointment', '--color-text', '--color-highlight'],
     ['links on a highlighted appointment', '--color-primary-dark', '--color-highlight'],
+    ['form errors on the main card', '--color-error', '--color-surface'],
   ])('%s', (_, fg, bg) => {
     expect(tokens[fg], fg).toBeDefined()
     expect(tokens[bg], bg).toBeDefined()
