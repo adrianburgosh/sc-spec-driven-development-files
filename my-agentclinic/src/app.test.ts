@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { app } from './app.js'
+import { createApp } from './app.js'
+import { openDb } from './db/index.js'
+import { seed } from './db/seed.js'
 import { HomePage } from './views/HomePage.js'
+
+const seededDb = () => {
+  const db = openDb(':memory:')
+  seed(db)
+  return db
+}
+
+const app = createApp(seededDb())
 
 describe('GET /', () => {
   it('responds with an HTML page', async () => {
