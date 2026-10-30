@@ -90,7 +90,7 @@ describe('GET /agents', () => {
 
 describe('GET /agents/:id', () => {
   it("shows the agent's profile", async () => {
-    const [agent] = listAgents(db)
+    const agent = listAgents(db).find((a) => a.checkedInOn === '2026-10-21')
     const res = await app.request(`/agents/${agent!.id}`)
     const body = await res.text()
 
@@ -99,7 +99,7 @@ describe('GET /agents/:id', () => {
     expect(body).toContain(agent!.model)
     expect(body).toContain(agent!.role)
     expect(body).toContain(escapeHtml(agent!.bio))
-    expect(body).toContain(`datetime="${agent!.checkedInOn}"`)
+    expect(body).toContain(`<time datetime="2026-10-21">October 21, 2026</time>`)
   })
 
   it.each(['999', 'not-a-number'])('returns a friendly 404 for /agents/%s', async (id) => {

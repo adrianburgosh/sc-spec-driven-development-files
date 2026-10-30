@@ -33,9 +33,9 @@ describe('Layout', () => {
     const page = await (<Layout title="Test">{null}</Layout>).toString()
     const nav = page.match(/<nav aria-label="Main">(.*)<\/nav>/s)?.[1] ?? ''
 
-    expect(nav).toContain('href="/"')
-    expect(nav).toContain('href="/agents"')
-    expect(nav).toContain('href="/ailments"')
+    expect(nav).toContain('<a href="/">Home</a>')
+    expect(nav).toContain('<a href="/agents">Agents</a>')
+    expect(nav).toContain('<a href="/ailments">Ailments</a>')
   })
 
   it('marks only the current page link with aria-current', async () => {
