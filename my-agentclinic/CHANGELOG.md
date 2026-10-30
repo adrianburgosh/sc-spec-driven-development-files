@@ -2,6 +2,17 @@
 
 ## 2026-10-29
 
+- Declare view component props as named types (68ed21b)
+- Add the `/ailments` page with mild/moderate/severe badges (95091f4)
+- Add the `/agents` list and `/agents/:id` profile pages, with a friendly 404 (6ca473f)
+- Build the app with `createApp(db)` so tests use an in-memory database (fd5fc29)
+- Add typed data access and the `npm run seed` script (25ee922)
+- Add SQLite via Node 24's built-in `node:sqlite`, with a startup migration (b2fa0d7)
+- Add the main nav with a current-page marker (49c1430)
+- Adopt Pico CSS with the clinic color theme (dc9c0e7)
+- Add the Phase 2 feature spec and record Pico CSS in the tech stack (ef4913c)
+- Merge the roadmap's early phases into Phase 2 and renumber the rest (5c8ed11)
+- Add `CHANGELOG.md` and the `/changelog` project skill (c3aa647)
 - Make the web UI responsive (mobile-first) (5e2d046)
 - Validate phases through Vitest and `npm run validate` (87e2952)
 - Split the layout's `Header`, `Main` and `Footer` into their own files (2946681)
