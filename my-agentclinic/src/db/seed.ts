@@ -1,5 +1,5 @@
 import { pathToFileURL } from 'node:url'
-import { dbPath, openDb, type Db } from './index.js'
+import { dbPath, openDb, transaction, type Db } from './index.js'
 import { upcomingSlots } from '../slots.js'
 import type { Agent, Ailment, Therapy } from '../types.js'
 
@@ -134,9 +134,8 @@ export const seedAppointments: { agent: string; therapy: string; nthSlot: number
   { agent: 'Clawdia', therapy: 'Scope Boundary Coaching', nthSlot: 17 },
 ]
 
-export const seed = (db: Db, now: Date = new Date()) => {
-  db.exec('BEGIN')
-  try {
+export const seed = (db: Db, now: Date = new Date()) =>
+  transaction(db, () => {
     db.exec(`
       DELETE FROM appointments; DELETE FROM agent_ailments; DELETE FROM ailment_therapies;
       DELETE FROM agents; DELETE FROM ailments; DELETE FROM therapies;
@@ -173,12 +172,7 @@ export const seed = (db: Db, now: Date = new Date()) => {
     for (const a of seedAppointments) {
       insertAppointment.run(agentIds.get(a.agent)!, therapyIds.get(a.therapy)!, slots[a.nthSlot]!)
     }
-    db.exec('COMMIT')
-  } catch (err) {
-    db.exec('ROLLBACK')
-    throw err
-  }
-}
+  })
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   seed(openDb(dbPath))

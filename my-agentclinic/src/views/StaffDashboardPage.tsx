@@ -1,5 +1,5 @@
 import { formatDay } from '../slots.js'
-import type { Appointment, ClinicCounts } from '../types.js'
+import type { Agent, Ailment, Appointment, ClinicCounts, Therapy } from '../types.js'
 import { AppointmentList } from './AppointmentList.js'
 import { Layout } from './Layout.js'
 
@@ -7,9 +7,54 @@ type StaffDashboardPageProps = {
   today: string
   todaysAppointments: Appointment[]
   counts: ClinicCounts
+  agents: Agent[]
+  ailments: Ailment[]
+  therapies: Therapy[]
 }
 
-export const StaffDashboardPage = ({ today, todaysAppointments, counts }: StaffDashboardPageProps) => (
+type ManageSectionProps = {
+  id: string
+  title: string
+  /** e.g. "agents", used in the /staff/<path>/… URLs */
+  path: string
+  addLabel: string
+  items: { id: number; name: string }[]
+  empty: string
+}
+
+const ManageSection = ({ id, title, path, addLabel, items, empty }: ManageSectionProps) => (
+  <section aria-labelledby={id}>
+    <h3 id={id}>{title}</h3>
+    <p>
+      <a href={`/staff/${path}/new`} role="button" class="outline">
+        {addLabel}
+      </a>
+    </p>
+    {items.length === 0 ? (
+      <p class="empty-state">{empty}</p>
+    ) : (
+      <ul class="manage-list">
+        {items.map((item) => (
+          <li>
+            {item.name}{' '}
+            <a href={`/staff/${path}/${item.id}/edit`} aria-label={`Edit ${item.name}`}>
+              Edit
+            </a>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+)
+
+export const StaffDashboardPage = ({
+  today,
+  todaysAppointments,
+  counts,
+  agents,
+  ailments,
+  therapies,
+}: StaffDashboardPageProps) => (
   <Layout title="Staff dashboard · AgentClinic" current="/staff">
     <h1>Staff dashboard</h1>
     <p>The whole clinic at a glance. Coffee is in the break room; patience is in the training data.</p>
@@ -38,6 +83,35 @@ export const StaffDashboardPage = ({ today, todaysAppointments, counts }: StaffD
       ) : (
         <AppointmentList appointments={todaysAppointments} readOnly />
       )}
+    </section>
+    <section aria-labelledby="manage">
+      <h2 id="manage">Manage the clinic</h2>
+      <div class="dashboard-grid">
+        <ManageSection
+          id="manage-agents"
+          title="Agents"
+          path="agents"
+          addLabel="Add an agent"
+          items={agents}
+          empty="No agents yet."
+        />
+        <ManageSection
+          id="manage-ailments"
+          title="Ailments"
+          path="ailments"
+          addLabel="Add an ailment"
+          items={ailments}
+          empty="No ailments yet."
+        />
+        <ManageSection
+          id="manage-therapies"
+          title="Therapies"
+          path="therapies"
+          addLabel="Add a therapy"
+          items={therapies}
+          empty="No therapies yet."
+        />
+      </div>
     </section>
   </Layout>
 )

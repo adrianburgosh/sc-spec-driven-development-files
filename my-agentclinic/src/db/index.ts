@@ -15,7 +15,21 @@ export const migrate = (db: Db) => {
   db.exec(readFileSync(schemaPath, 'utf8'))
 }
 
-export const openDb = (path: string = dbPath): Db => {
+/** Runs `fn` in a transaction, or inside the caller's transaction if one is already open. */
+export const transaction = <T>(db: Db, fn: () => T): T => {
+  if (db.isTransaction) return fn()
+  db.exec('BEGIN')
+  try {
+    const result = fn()
+    db.exec('COMMIT')
+    return result
+  } catch (err) {
+    db.exec('ROLLBACK')
+    throw err
+  }
+}
+
+export const openDb =(path: string = dbPath): Db => {
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true })
   const db = new DatabaseSync(path)
   db.exec('PRAGMA foreign_keys = ON')

@@ -5,18 +5,17 @@ import { getAgent, listAgents } from './db/agents.js'
 import {
   cancelAppointment,
   createAppointment,
-  listAppointmentsOn,
   listFreeSlots,
   listUpcomingAppointments,
   listUpcomingAppointmentsForAgent,
   SlotTakenError,
 } from './db/appointments.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
-import { clinicCounts } from './db/clinic.js'
 import type { Db } from './db/index.js'
 import { listSuggestedTherapiesForAgent, listTherapies, listTherapiesByAilment } from './db/therapies.js'
+import { parseId, readForm } from './http.js'
 import { fromRoot } from './paths.js'
-import { toDay } from './slots.js'
+import { staffRoutes } from './staff.js'
 import { validateBooking, type FormErrors, type FormValues } from './validation.js'
 import { AgentDashboardPage } from './views/AgentDashboardPage.js'
 import { AgentNotFoundPage } from './views/AgentNotFoundPage.js'
@@ -27,7 +26,6 @@ import { AppointmentNotFoundPage } from './views/AppointmentNotFoundPage.js'
 import { AppointmentsPage } from './views/AppointmentsPage.js'
 import { BookingPage } from './views/BookingPage.js'
 import { HomePage } from './views/HomePage.js'
-import { StaffDashboardPage } from './views/StaffDashboardPage.js'
 import { TherapiesPage } from './views/TherapiesPage.js'
 
 type AppOptions = {
@@ -35,17 +33,8 @@ type AppOptions = {
   now?: () => Date
 }
 
-/** A route or query id, or undefined when it isn't a positive whole number. */
-const parseId = (raw: string | undefined) => (raw && /^\d+$/.test(raw) ? Number(raw) : undefined)
-
 // The only pages a cancel may send you back to, so the form can't be used as an open redirect.
 const CANCEL_REDIRECTS = /^\/(appointments|agents\/\d+\/dashboard)$/
-
-/** The submitted form as plain strings (file uploads are ignored). */
-const readForm = async (c: Context): Promise<FormValues> => {
-  const body = await c.req.parseBody()
-  return Object.fromEntries(Object.entries(body).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : [])))
-}
 
 export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) => {
   const app = new Hono()
@@ -106,7 +95,7 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
   app.get('/appointments/new', (c) => renderBooking(c, { agent: c.req.query('agent') ?? '' }, {}))
 
   app.post('/appointments', async (c) => {
-    const values = await readForm(c)
+    const { values } = await readForm(c)
     const result = validateBooking(values, {
       agentIds: new Set(listAgents(db).map((a) => a.id)),
       therapyIds: new Set(listTherapies(db).map((t) => t.id)),
@@ -129,23 +118,14 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
     }
   })
 
-  app.get('/staff', (c) => {
-    const today = toDay(now())
-    return c.html(
-      <StaffDashboardPage
-        today={today}
-        todaysAppointments={listAppointmentsOn(db, today)}
-        counts={clinicCounts(db, now())}
-      />,
-    )
-  })
-
   app.post('/appointments/:id/cancel', async (c) => {
     const id = parseId(c.req.param('id'))
     if (id === undefined || !cancelAppointment(db, id, now())) return c.html(<AppointmentNotFoundPage />, 404)
-    const { redirect = '' } = await readForm(c)
+    const { redirect = '' } = (await readForm(c)).values
     return c.redirect(CANCEL_REDIRECTS.test(redirect) ? redirect : '/appointments', 303)
   })
+
+  app.route('/staff', staffRoutes(db, now))
 
   return app
 }

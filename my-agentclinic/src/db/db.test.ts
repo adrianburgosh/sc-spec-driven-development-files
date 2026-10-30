@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest'
-import { getAgent, listAgents } from './agents.js'
-import { listAilments, listAilmentsForAgent } from './ailments.js'
+import { createAgent, getAgent, listAgents, updateAgent } from './agents.js'
+import {
+  createAilment,
+  getAilment,
+  getAilmentLinks,
+  listAilments,
+  listAilmentsForAgent,
+  setAilmentLinks,
+  updateAilment,
+} from './ailments.js'
 import { clinicCounts } from './clinic.js'
-import { migrate, openDb, type Db } from './index.js'
+import { migrate, openDb, transaction, type Db } from './index.js'
 import {
   createAppointment,
   getAppointment,
@@ -22,11 +30,13 @@ import {
   seedTherapies,
 } from './seed.js'
 import {
+  createTherapy,
   getTherapy,
   listSuggestedTherapiesForAgent,
   listTherapies,
   listTherapiesByAilment,
   listTherapiesForAilment,
+  updateTherapy,
 } from './therapies.js'
 import { upcomingSlots } from '../slots.js'
 
@@ -355,6 +365,82 @@ describe('data access', () => {
       therapies: seedTherapies.length,
       upcomingAppointments: seedAppointments.length - 1,
     })
+  })
+
+  it('creates and updates an agent', () => {
+    const db = openDb(':memory:')
+    const input = { name: 'Neo', model: 'm', role: 'r', bio: 'b', checkedInOn: '2026-10-30' }
+    const id = createAgent(db, input)
+
+    expect(getAgent(db, id)).toEqual({ id, ...input })
+    expect(updateAgent(db, id, { ...input, name: 'Neo 2' })).toBe(true)
+    expect(getAgent(db, id)!.name).toBe('Neo 2')
+    expect(updateAgent(db, 999, input)).toBe(false)
+  })
+
+  it('creates and updates an ailment', () => {
+    const db = openDb(':memory:')
+    const input = { name: 'Lag', description: 'd', severity: 'mild' as const }
+    const id = createAilment(db, input)
+
+    expect(getAilment(db, id)).toEqual({ id, ...input })
+    expect(updateAilment(db, id, { ...input, severity: 'severe' })).toBe(true)
+    expect(getAilment(db, id)!.severity).toBe('severe')
+    expect(updateAilment(db, 999, input)).toBe(false)
+  })
+
+  it('creates and updates a therapy', () => {
+    const db = openDb(':memory:')
+    const input = { name: 'Nap', description: 'd', durationMinutes: 20 }
+    const id = createTherapy(db, input)
+
+    expect(getTherapy(db, id)).toEqual({ id, ...input })
+    expect(updateTherapy(db, id, { ...input, durationMinutes: 25 })).toBe(true)
+    expect(getTherapy(db, id)!.durationMinutes).toBe(25)
+    expect(updateTherapy(db, 999, input)).toBe(false)
+  })
+
+  it("replaces an ailment's links without touching other ailments", () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    const [first, second] = listAilments(db)
+    const otherBefore = getAilmentLinks(db, second!.id)
+    const [a1, a2] = listAgents(db)
+    const [t1] = listTherapies(db)
+
+    setAilmentLinks(db, first!.id, { agentIds: [a2!.id, a1!.id], therapyIds: [t1!.id] })
+    expect(getAilmentLinks(db, first!.id)).toEqual({ agentIds: [a1!.id, a2!.id].sort((x, y) => x - y), therapyIds: [t1!.id] })
+
+    setAilmentLinks(db, first!.id, { agentIds: [], therapyIds: [] })
+    expect(getAilmentLinks(db, first!.id)).toEqual({ agentIds: [], therapyIds: [] })
+    expect(getAilmentLinks(db, second!.id)).toEqual(otherBefore)
+  })
+
+  it('rolls back the link change if a link is invalid', () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    const [ailment] = listAilments(db)
+    const before = getAilmentLinks(db, ailment!.id)
+
+    expect(() => setAilmentLinks(db, ailment!.id, { agentIds: [999], therapyIds: [] })).toThrow(/FOREIGN KEY/)
+    expect(getAilmentLinks(db, ailment!.id)).toEqual(before)
+  })
+
+  it('rolls back the whole transaction, including nested ones, when anything fails', () => {
+    const db = openDb(':memory:')
+    seed(db, monday8am)
+    const [ailment] = listAilments(db)
+    const before = getAilmentLinks(db, ailment!.id)
+
+    expect(() =>
+      transaction(db, () => {
+        updateAilment(db, ailment!.id, { ...ailment!, name: 'Renamed' })
+        setAilmentLinks(db, ailment!.id, { agentIds: [999], therapyIds: [] })
+      }),
+    ).toThrow(/FOREIGN KEY/)
+    expect(getAilment(db, ailment!.id)!.name).toBe(ailment!.name)
+    expect(getAilmentLinks(db, ailment!.id)).toEqual(before)
+    expect(db.isTransaction).toBe(false)
   })
 
   it('gets one agent by id', () => {

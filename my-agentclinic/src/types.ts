@@ -16,6 +16,12 @@ export type Ailment = {
   severity: Severity
 }
 
+/** Which agents have an ailment and which therapies treat it. */
+export type AilmentLinks = {
+  agentIds: number[]
+  therapyIds: number[]
+}
+
 export type Therapy = {
   id: number
   name: string

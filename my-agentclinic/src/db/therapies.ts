@@ -10,6 +10,21 @@ export const listTherapies = (db: Db): Therapy[] =>
 export const getTherapy = (db: Db, id: number): Therapy | undefined =>
   db.prepare(`SELECT ${columns} FROM therapies WHERE id = ?`).get(id) as Therapy | undefined
 
+export type TherapyInput = Omit<Therapy, 'id'>
+
+export const createTherapy = (db: Db, t: TherapyInput): number =>
+  Number(
+    db
+      .prepare('INSERT INTO therapies (name, description, duration_minutes) VALUES (?, ?, ?)')
+      .run(t.name, t.description, t.durationMinutes).lastInsertRowid,
+  )
+
+/** Returns false if there is no therapy with that id. */
+export const updateTherapy = (db: Db, id: number, t: TherapyInput): boolean =>
+  db
+    .prepare('UPDATE therapies SET name = ?, description = ?, duration_minutes = ? WHERE id = ?')
+    .run(t.name, t.description, t.durationMinutes, id).changes > 0
+
 export const listTherapiesForAilment = (db: Db, ailmentId: number): Therapy[] =>
   db
     .prepare(

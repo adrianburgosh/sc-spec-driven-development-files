@@ -22,12 +22,7 @@ export const BookingPage = ({ agents, therapies, freeSlots, values, errors }: Bo
   <Layout title="Book an appointment · AgentClinic" current="/appointments">
     <h1>Book an appointment</h1>
     <p>Pick a therapy and a time. We'll keep the kettle warm and the context window clear.</p>
-    <FormError error={errors.form} />
-    {Object.keys(errors).length > 0 && !errors.form && (
-      <p role="alert" class="form-error">
-        Almost there! Please fix the highlighted fields.
-      </p>
-    )}
+    <FormError errors={errors} />
     <form method="post" action="/appointments" class="stacked-form">
       <Field name="agent" label="Agent" error={errors.agent}>
         <select {...controlProps('agent', errors.agent)} required>
