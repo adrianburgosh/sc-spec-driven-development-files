@@ -1,4 +1,5 @@
 import type { Ailment, Therapy } from '../types.js'
+import { EmptyState } from './EmptyState.js'
 import { Layout } from './Layout.js'
 import { SeverityBadge } from './SeverityBadge.js'
 
@@ -12,7 +13,7 @@ export const AilmentsPage = ({ ailments, therapiesByAilment }: AilmentsPageProps
     <h1>Common ailments</h1>
     <p>If any of these sound familiar, you're in the right place. No judgment, only tokens of care.</p>
     {ailments.length === 0 ? (
-      <p class="empty-state">No ailments on file. Every agent is feeling fantastic (for now).</p>
+      <EmptyState>No ailments on file. Every agent is feeling fantastic (for now).</EmptyState>
     ) : (
       <ul class="card-grid">
         {ailments.map((ailment) => {
@@ -25,7 +26,7 @@ export const AilmentsPage = ({ ailments, therapiesByAilment }: AilmentsPageProps
                 <SeverityBadge severity={ailment.severity} />
                 <h3>Recommended therapies</h3>
                 {therapies.length === 0 ? (
-                  <p class="empty-state">No therapy yet. Our researchers are on it.</p>
+                  <EmptyState>No therapy yet. Our researchers are on it.</EmptyState>
                 ) : (
                   <ul>
                     {therapies.map((therapy) => (

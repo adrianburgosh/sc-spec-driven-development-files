@@ -1,5 +1,6 @@
 import type { Agent, Therapy } from '../types.js'
 import { SEVERITIES, type FormErrors, type FormLists, type FormValues } from '../validation.js'
+import { EmptyState } from './EmptyState.js'
 import { controlProps, Field, FieldError, FormError } from './Field.js'
 import { Layout } from './Layout.js'
 
@@ -31,7 +32,7 @@ const CheckboxGroup = ({ name, legend, options, checked, error, empty }: Checkbo
   >
     <legend>{legend}</legend>
     {options.length === 0 ? (
-      <p class="empty-state">{empty}</p>
+      <EmptyState>{empty}</EmptyState>
     ) : (
       options.map((option) => (
         <label>

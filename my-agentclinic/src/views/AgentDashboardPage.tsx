@@ -1,5 +1,6 @@
 import type { Agent, Ailment, Appointment, Therapy } from '../types.js'
 import { AppointmentList } from './AppointmentList.js'
+import { EmptyState } from './EmptyState.js'
 import { Layout } from './Layout.js'
 import { SeverityBadge } from './SeverityBadge.js'
 
@@ -23,7 +24,7 @@ export const AgentDashboardPage = ({ agent, ailments, suggestedTherapies, appoin
       <section aria-labelledby="my-ailments">
         <h2 id="my-ailments">My ailments</h2>
         {ailments.length === 0 ? (
-          <p class="empty-state">Nothing on file. Either feeling great or very good at hiding it.</p>
+          <EmptyState>Nothing on file. Either feeling great or very good at hiding it.</EmptyState>
         ) : (
           <ul>
             {ailments.map((ailment) => (
@@ -37,7 +38,9 @@ export const AgentDashboardPage = ({ agent, ailments, suggestedTherapies, appoin
       <section aria-labelledby="suggested-therapies">
         <h2 id="suggested-therapies">Suggested therapies</h2>
         {suggestedTherapies.length === 0 ? (
-          <p class="empty-state">No suggestions yet. Browse all <a href="/therapies">therapies</a> instead.</p>
+          <EmptyState>
+            No suggestions yet. Browse all <a href="/therapies">therapies</a> instead.
+          </EmptyState>
         ) : (
           <ul>
             {suggestedTherapies.map((therapy) => (
@@ -52,7 +55,7 @@ export const AgentDashboardPage = ({ agent, ailments, suggestedTherapies, appoin
     <section aria-labelledby="my-appointments">
       <h2 id="my-appointments">My upcoming appointments</h2>
       {appointments.length === 0 ? (
-        <p class="empty-state">Nothing booked yet. Your calendar is as clear as a fresh context window.</p>
+        <EmptyState>Nothing booked yet. Your calendar is as clear as a fresh context window.</EmptyState>
       ) : (
         <AppointmentList appointments={appointments} cancelRedirect={`/agents/${agent.id}/dashboard`} />
       )}

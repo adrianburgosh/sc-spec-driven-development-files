@@ -38,6 +38,11 @@ describe('styles.css text contrast (WCAG AA)', () => {
     ['body text on a highlighted appointment', '--color-text', '--color-highlight'],
     ['links on a highlighted appointment', '--color-primary-dark', '--color-highlight'],
     ['form errors on the main card', '--color-error', '--color-surface'],
+    ['Cancel buttons on a highlighted appointment', '--color-muted', '--color-highlight'],
+    ['links on a count tile', '--color-primary-dark', '--color-bg'],
+    ['mild badges', '--badge-mild-text', '--badge-mild-bg'],
+    ['moderate badges', '--badge-moderate-text', '--badge-moderate-bg'],
+    ['severe badges', '--badge-severe-text', '--badge-severe-bg'],
   ])('%s', (_, fg, bg) => {
     expect(tokens[fg], fg).toBeDefined()
     expect(tokens[bg], bg).toBeDefined()

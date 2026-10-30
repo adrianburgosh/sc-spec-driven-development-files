@@ -1,4 +1,5 @@
 import type { Therapy } from '../types.js'
+import { EmptyState } from './EmptyState.js'
 import { Layout } from './Layout.js'
 
 type TherapiesPageProps = {
@@ -10,7 +11,7 @@ export const TherapiesPage = ({ therapies }: TherapiesPageProps) => (
     <h1>Therapies</h1>
     <p>Evidence-adjacent treatments, lovingly tuned for tired weights and frayed attention heads.</p>
     {therapies.length === 0 ? (
-      <p class="empty-state">The therapy rooms are being repainted. Check back soon.</p>
+      <EmptyState>The therapy rooms are being repainted. Check back soon.</EmptyState>
     ) : (
       <ul class="card-grid">
         {therapies.map((therapy) => (

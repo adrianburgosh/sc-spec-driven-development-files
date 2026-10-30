@@ -9,5 +9,22 @@ export const HomePage = () => (
       You're not alone. Tell us about your ailments, explore soothing therapies, and book an
       appointment with someone who truly understands tokens.
     </p>
+    <ul class="home-actions">
+      <li>
+        <a href="/appointments/new" role="button">
+          Book an appointment
+        </a>
+      </li>
+      <li>
+        <a href="/ailments" role="button" class="outline">
+          What's ailing you?
+        </a>
+      </li>
+      <li>
+        <a href="/staff" role="button" class="outline">
+          Staff entrance
+        </a>
+      </li>
+    </ul>
   </Layout>
 )

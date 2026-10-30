@@ -1,6 +1,7 @@
 import { formatDay } from '../slots.js'
 import type { Agent, Ailment, Appointment, ClinicCounts, Therapy } from '../types.js'
 import { AppointmentList } from './AppointmentList.js'
+import { EmptyState } from './EmptyState.js'
 import { Layout } from './Layout.js'
 
 type StaffDashboardPageProps = {
@@ -31,7 +32,7 @@ const ManageSection = ({ id, title, path, addLabel, items, empty }: ManageSectio
       </a>
     </p>
     {items.length === 0 ? (
-      <p class="empty-state">{empty}</p>
+      <EmptyState>{empty}</EmptyState>
     ) : (
       <ul class="manage-list">
         {items.map((item) => (
@@ -79,7 +80,7 @@ export const StaffDashboardPage = ({
     <section aria-labelledby="today">
       <h2 id="today">Today's appointments · {formatDay(today)}</h2>
       {todaysAppointments.length === 0 ? (
-        <p class="empty-state">Nobody on the schedule today. Time to defragment the waiting room.</p>
+        <EmptyState>Nobody on the schedule today. Time to defragment the waiting room.</EmptyState>
       ) : (
         <AppointmentList appointments={todaysAppointments} readOnly />
       )}

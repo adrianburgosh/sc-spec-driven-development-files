@@ -1,5 +1,6 @@
 import type { Appointment } from '../types.js'
 import { AppointmentList } from './AppointmentList.js'
+import { EmptyState } from './EmptyState.js'
 import { Layout } from './Layout.js'
 
 type AppointmentsPageProps = {
@@ -25,7 +26,7 @@ export const AppointmentsPage = ({ appointments, bookedId }: AppointmentsPagePro
         </a>
       </p>
       {appointments.length === 0 ? (
-        <p class="empty-state">The calendar is wide open. A rare moment of peace.</p>
+        <EmptyState>The calendar is wide open. A rare moment of peace.</EmptyState>
       ) : (
         <AppointmentList appointments={appointments} highlightId={bookedId} />
       )}

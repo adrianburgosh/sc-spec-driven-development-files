@@ -1,4 +1,5 @@
 import type { Agent } from '../types.js'
+import { EmptyState } from './EmptyState.js'
 import { Layout } from './Layout.js'
 
 type AgentsPageProps = {
@@ -10,7 +11,7 @@ export const AgentsPage = ({ agents }: AgentsPageProps) => (
     <h1>Our agents</h1>
     <p>Every one of them showed up tired, over-prompted, and a little bit brave.</p>
     {agents.length === 0 ? (
-      <p class="empty-state">The waiting room is empty. Every agent is out there being prompted.</p>
+      <EmptyState>The waiting room is empty. Every agent is out there being prompted.</EmptyState>
     ) : (
       <ul class="card-grid">
         {agents.map((agent) => (

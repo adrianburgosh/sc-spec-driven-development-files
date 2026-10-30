@@ -18,6 +18,19 @@
   --pico-form-element-invalid-border-color: var(--color-error);
   --pico-form-element-invalid-active-border-color: var(--color-error);
   --pico-del-color: var(--color-error);
+  /* Severity badges: each text/background pair is checked for AA contrast in src/styles.test.ts. */
+  --badge-mild-bg: #d8f3ee;
+  --badge-mild-text: #0f5247;
+  --badge-moderate-bg: #fff0c2;
+  --badge-moderate-text: #6b4a00;
+  --badge-severe-bg: #ffe0d6;
+  --badge-severe-text: #8a2a10;
+  /* Secondary (outline) buttons, like Cancel, use the muted clinic grey-green instead of Pico's slate. */
+  --pico-secondary: var(--color-muted);
+  --pico-secondary-border: var(--color-muted);
+  --pico-secondary-hover: var(--color-text);
+  --pico-secondary-hover-border: var(--color-text);
+  --pico-secondary-focus: rgb(91 111 107 / 0.35);
 
   --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-heading: "Trebuchet MS", system-ui, sans-serif;
@@ -179,6 +192,29 @@ body > main.site-main {
   font-style: italic;
 }
 
+/* Home page calls to action: stacked full-width on phones, in a row when they fit. */
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-md);
+  padding: 0;
+
+  & > li {
+    list-style: none;
+    flex: 1 1 100%;
+  }
+
+  & [role="button"] {
+    width: 100%;
+  }
+}
+
+@media (min-width: 40rem) {
+  .home-actions > li {
+    flex: 0 0 auto;
+  }
+}
+
 /* Forms: one column at every width, kept to a readable line length. */
 .stacked-form {
   max-width: 36rem;
@@ -311,17 +347,17 @@ body > main.site-main {
   text-transform: capitalize;
 
   &.badge-mild {
-    background: #d8f3ee;
-    color: #0f5247;
+    background: var(--badge-mild-bg);
+    color: var(--badge-mild-text);
   }
 
   &.badge-moderate {
-    background: #fff0c2;
-    color: #6b4a00;
+    background: var(--badge-moderate-bg);
+    color: var(--badge-moderate-text);
   }
 
   &.badge-severe {
-    background: #ffe0d6;
-    color: #8a2a10;
+    background: var(--badge-severe-bg);
+    color: var(--badge-severe-text);
   }
 }

@@ -1,6 +1,7 @@
 import { formatDay, formatTime } from '../slots.js'
 import type { Agent, Therapy } from '../types.js'
 import type { FormErrors, FormValues } from '../validation.js'
+import { EmptyState } from './EmptyState.js'
 import { controlProps, Field, FormError } from './Field.js'
 import { Layout } from './Layout.js'
 
@@ -46,7 +47,7 @@ export const BookingPage = ({ agents, therapies, freeSlots, values, errors }: Bo
       </Field>
       <Field name="slot" label="Time slot" error={errors.slot}>
         {freeSlots.length === 0 ? (
-          <p class="empty-state">Every slot for the next two weeks is taken. Popular place, this clinic.</p>
+          <EmptyState>Every slot for the next two weeks is taken. Popular place, this clinic.</EmptyState>
         ) : (
           <select {...controlProps('slot', errors.slot)} required>
             <option value="">Choose a time…</option>

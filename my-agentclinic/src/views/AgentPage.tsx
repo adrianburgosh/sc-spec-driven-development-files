@@ -1,4 +1,5 @@
 import type { Agent, Ailment } from '../types.js'
+import { EmptyState } from './EmptyState.js'
 import { Layout } from './Layout.js'
 import { SeverityBadge } from './SeverityBadge.js'
 
@@ -27,7 +28,7 @@ export const AgentPage = ({ agent, ailments }: AgentPageProps) => (
       <p>{agent.bio}</p>
       <h2>Current ailments</h2>
       {ailments.length === 0 ? (
-        <p class="empty-state">Nothing on file. Either feeling great or very good at hiding it.</p>
+        <EmptyState>Nothing on file. Either feeling great or very good at hiding it.</EmptyState>
       ) : (
         <ul class="ailment-list">
           {ailments.map((ailment) => (

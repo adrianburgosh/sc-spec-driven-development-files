@@ -25,7 +25,9 @@ import { AilmentsPage } from './views/AilmentsPage.js'
 import { AppointmentNotFoundPage } from './views/AppointmentNotFoundPage.js'
 import { AppointmentsPage } from './views/AppointmentsPage.js'
 import { BookingPage } from './views/BookingPage.js'
+import { ErrorPage } from './views/ErrorPage.js'
 import { HomePage } from './views/HomePage.js'
+import { NotFoundPage } from './views/NotFoundPage.js'
 import { TherapiesPage } from './views/TherapiesPage.js'
 
 type AppOptions = {
@@ -126,6 +128,14 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
   })
 
   app.route('/staff', staffRoutes(db, now))
+
+  app.notFound((c) => c.html(<NotFoundPage />, 404))
+
+  // Log the details for us, show a friendly page (never the stack trace) to the visitor.
+  app.onError((err, c) => {
+    console.error(err)
+    return c.html(<ErrorPage />, 500)
+  })
 
   return app
 }
