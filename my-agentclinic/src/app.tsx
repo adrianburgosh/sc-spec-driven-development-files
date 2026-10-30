@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { getAgent, listAgents } from './db/agents.js'
+import { listUpcomingAppointments } from './db/appointments.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import type { Db } from './db/index.js'
 import { listTherapies, listTherapiesByAilment } from './db/therapies.js'
@@ -9,10 +10,16 @@ import { AgentNotFoundPage } from './views/AgentNotFoundPage.js'
 import { AgentPage } from './views/AgentPage.js'
 import { AgentsPage } from './views/AgentsPage.js'
 import { AilmentsPage } from './views/AilmentsPage.js'
+import { AppointmentsPage } from './views/AppointmentsPage.js'
 import { HomePage } from './views/HomePage.js'
 import { TherapiesPage } from './views/TherapiesPage.js'
 
-export const createApp = (db: Db) => {
+type AppOptions = {
+  /** The clock. Tests pass a fixed time so "upcoming" and "today" are deterministic. */
+  now?: () => Date
+}
+
+export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) => {
   const app = new Hono()
 
   app.get('/pico.min.css', serveStatic({ path: fromRoot('node_modules/@picocss/pico/css/pico.min.css') }))
@@ -35,6 +42,8 @@ export const createApp = (db: Db) => {
   )
 
   app.get('/therapies', (c) => c.html(<TherapiesPage therapies={listTherapies(db)} />))
+
+  app.get('/appointments', (c) => c.html(<AppointmentsPage appointments={listUpcomingAppointments(db, now())} />))
 
   return app
 }

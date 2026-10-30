@@ -22,3 +22,16 @@ export type Therapy = {
   description: string
   durationMinutes: number
 }
+
+export type AppointmentStatus = 'booked' | 'cancelled'
+
+/** An appointment with the names a page needs to show it. */
+export type Appointment = {
+  id: number
+  slot: string
+  status: AppointmentStatus
+  agentId: number
+  agentName: string
+  therapyId: number
+  therapyName: string
+}

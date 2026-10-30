@@ -34,3 +34,16 @@ CREATE TABLE IF NOT EXISTS ailment_therapies (
   therapy_id INTEGER NOT NULL REFERENCES therapies (id) ON DELETE CASCADE,
   PRIMARY KEY (ailment_id, therapy_id)
 );
+
+-- `slot` is local clinic time, `YYYY-MM-DDTHH:00` (see src/slots.ts).
+CREATE TABLE IF NOT EXISTS appointments (
+  id INTEGER PRIMARY KEY,
+  agent_id INTEGER NOT NULL REFERENCES agents (id) ON DELETE CASCADE,
+  therapy_id INTEGER NOT NULL REFERENCES therapies (id) ON DELETE CASCADE,
+  slot TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'booked' CHECK (status IN ('booked', 'cancelled')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- One booked appointment per slot, clinic-wide. Cancelled ones don't count, so their slot frees up.
+CREATE UNIQUE INDEX IF NOT EXISTS appointments_booked_slot ON appointments (slot) WHERE status = 'booked';

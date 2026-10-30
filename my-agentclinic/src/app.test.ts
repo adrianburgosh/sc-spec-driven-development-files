@@ -4,16 +4,23 @@ import { createApp } from './app.js'
 import { listAgents } from './db/agents.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import { openDb } from './db/index.js'
-import { seed } from './db/seed.js'
+import { listUpcomingAppointments } from './db/appointments.js'
+import { seed, seedAppointments } from './db/seed.js'
+import { formatSlot } from './slots.js'
 import { listTherapies, listTherapiesForAilment } from './db/therapies.js'
 import { HomePage } from './views/HomePage.js'
 
 const escapeHtml = (text: string) =>
   text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
 
+// A fixed clock in local time, so the tests pass in any time zone. 2026-11-02 is a Monday,
+// and 08:00 is before opening, so the seeded appointments start at today's first slot.
+const NOW = new Date(2026, 10, 2, 8, 0)
+const clock = { now: () => NOW }
+
 const db = openDb(':memory:')
-seed(db)
-const app = createApp(db)
+seed(db, NOW)
+const app = createApp(db, clock)
 
 describe('GET /', () => {
   it('responds with an HTML page', async () => {
@@ -191,6 +198,42 @@ describe('GET /therapies', () => {
 
   it('shows an empty state when there are no therapies', async () => {
     const body = await (await createApp(openDb(':memory:')).request('/therapies')).text()
+
+    expect(body).toContain('class="empty-state"')
+  })
+})
+
+describe('GET /appointments', () => {
+  it('lists upcoming appointments soonest first, with agent links and therapies', async () => {
+    const res = await app.request('/appointments')
+    const body = await res.text()
+    const upcoming = listUpcomingAppointments(db, NOW)
+
+    expect(res.status).toBe(200)
+    expect(body).toContain('<a href="/appointments" aria-current="page">Appointments</a>')
+    expect(upcoming).toHaveLength(seedAppointments.length)
+    const positions = upcoming.map((a) => body.indexOf(`<time datetime="${a.slot}">${formatSlot(a.slot)}</time>`))
+    expect(positions.every((p) => p > -1)).toBe(true)
+    expect([...positions].sort((x, y) => x - y)).toEqual(positions)
+    for (const a of upcoming) {
+      expect(body).toContain(`<a href="/agents/${a.agentId}">${a.agentName}</a> · ${a.therapyName}`)
+    }
+  })
+
+  it('leaves out past and cancelled appointments', async () => {
+    const later = new Date(2026, 10, 2, 10, 0) // after the first seeded slot (09:00)
+    const [first, second] = listUpcomingAppointments(db, NOW)
+    const otherDb = openDb(':memory:')
+    seed(otherDb, NOW)
+    otherDb.prepare("UPDATE appointments SET status = 'cancelled' WHERE slot = ?").run(second!.slot)
+    const body = await (await createApp(otherDb, { now: () => later }).request('/appointments')).text()
+
+    expect(body).not.toContain(`datetime="${first!.slot}"`)
+    expect(body).not.toContain(`datetime="${second!.slot}"`)
+  })
+
+  it('shows an empty state when nothing is booked', async () => {
+    const body = await (await createApp(openDb(':memory:'), clock).request('/appointments')).text()
 
     expect(body).toContain('class="empty-state"')
   })

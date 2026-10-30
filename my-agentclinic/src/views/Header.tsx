@@ -3,6 +3,7 @@ const links = [
   { href: '/agents', label: 'Agents' },
   { href: '/ailments', label: 'Ailments' },
   { href: '/therapies', label: 'Therapies' },
+  { href: '/appointments', label: 'Appointments' },
 ]
 
 type HeaderProps = {

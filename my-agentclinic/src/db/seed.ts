@@ -1,5 +1,6 @@
 import { pathToFileURL } from 'node:url'
 import { dbPath, openDb, type Db } from './index.js'
+import { upcomingSlots } from '../slots.js'
 import type { Agent, Ailment, Therapy } from '../types.js'
 
 export const seedAgents: Omit<Agent, 'id'>[] = [
@@ -125,11 +126,19 @@ export const seedAilmentTherapies: Record<string, string[]> = {
   'Vague Instruction Vertigo': ['Guided Ambiguity Tolerance', 'Scope Boundary Coaching'],
 }
 
-export const seed = (db: Db) => {
+// Upcoming appointments, placed on the nth free slot after the seed runs, so they never go stale.
+export const seedAppointments: { agent: string; therapy: string; nthSlot: number }[] = [
+  { agent: 'Botley', therapy: 'Guided Ambiguity Tolerance', nthSlot: 0 },
+  { agent: 'Gemmy', therapy: 'Minimalist Retreat', nthSlot: 3 },
+  { agent: 'Llamarama', therapy: 'Source Grounding Session', nthSlot: 9 },
+  { agent: 'Clawdia', therapy: 'Scope Boundary Coaching', nthSlot: 17 },
+]
+
+export const seed = (db: Db, now: Date = new Date()) => {
   db.exec('BEGIN')
   try {
     db.exec(`
-      DELETE FROM agent_ailments; DELETE FROM ailment_therapies;
+      DELETE FROM appointments; DELETE FROM agent_ailments; DELETE FROM ailment_therapies;
       DELETE FROM agents; DELETE FROM ailments; DELETE FROM therapies;
     `)
     const insertAgent = db.prepare(
@@ -159,6 +168,11 @@ export const seed = (db: Db) => {
     for (const [ailment, therapies] of Object.entries(seedAilmentTherapies)) {
       for (const therapy of therapies) insertAilmentTherapy.run(ailmentIds.get(ailment)!, therapyIds.get(therapy)!)
     }
+    const slots = upcomingSlots(now)
+    const insertAppointment = db.prepare('INSERT INTO appointments (agent_id, therapy_id, slot) VALUES (?, ?, ?)')
+    for (const a of seedAppointments) {
+      insertAppointment.run(agentIds.get(a.agent)!, therapyIds.get(a.therapy)!, slots[a.nthSlot]!)
+    }
     db.exec('COMMIT')
   } catch (err) {
     db.exec('ROLLBACK')
@@ -169,6 +183,6 @@ export const seed = (db: Db) => {
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   seed(openDb(dbPath))
   console.log(
-    `Seeded ${seedAgents.length} agents, ${seedAilments.length} ailments and ${seedTherapies.length} therapies into ${dbPath}`,
+    `Seeded ${seedAgents.length} agents, ${seedAilments.length} ailments, ${seedTherapies.length} therapies and ${seedAppointments.length} appointments into ${dbPath}`,
   )
 }
