@@ -1,5 +1,6 @@
 import type { Ailment } from '../types.js'
 import { Layout } from './Layout.js'
+import { SeverityBadge } from './SeverityBadge.js'
 
 type AilmentsPageProps = {
   ailments: Ailment[]
@@ -18,7 +19,7 @@ export const AilmentsPage = ({ ailments }: AilmentsPageProps) => (
             <article>
               <h2>{ailment.name}</h2>
               <p>{ailment.description}</p>
-              <span class={`badge badge-${ailment.severity}`}>{ailment.severity}</span>
+              <SeverityBadge severity={ailment.severity} />
             </article>
           </li>
         ))}

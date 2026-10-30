@@ -1,5 +1,6 @@
-import type { Agent } from '../types.js'
+import type { Agent, Ailment } from '../types.js'
 import { Layout } from './Layout.js'
+import { SeverityBadge } from './SeverityBadge.js'
 
 const formatDate = (isoDate: string) =>
   new Date(`${isoDate}T00:00:00Z`).toLocaleDateString('en-US', {
@@ -11,9 +12,10 @@ const formatDate = (isoDate: string) =>
 
 type AgentPageProps = {
   agent: Agent
+  ailments: Ailment[]
 }
 
-export const AgentPage = ({ agent }: AgentPageProps) => (
+export const AgentPage = ({ agent, ailments }: AgentPageProps) => (
   <Layout title={`${agent.name} · AgentClinic`} current="/agents">
     <article>
       <header>
@@ -23,6 +25,18 @@ export const AgentPage = ({ agent }: AgentPageProps) => (
         </p>
       </header>
       <p>{agent.bio}</p>
+      <h2>Current ailments</h2>
+      {ailments.length === 0 ? (
+        <p class="empty-state">Nothing on file. Either feeling great or very good at hiding it.</p>
+      ) : (
+        <ul class="ailment-list">
+          {ailments.map((ailment) => (
+            <li>
+              {ailment.name} <SeverityBadge severity={ailment.severity} />
+            </li>
+          ))}
+        </ul>
+      )}
       <footer>
         Checked in on <time datetime={agent.checkedInOn}>{formatDate(agent.checkedInOn)}</time>
       </footer>

@@ -2,7 +2,7 @@ import { tmpdir } from 'node:os'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { createApp } from './app.js'
 import { listAgents } from './db/agents.js'
-import { listAilments } from './db/ailments.js'
+import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import { openDb } from './db/index.js'
 import { seed } from './db/seed.js'
 import { HomePage } from './views/HomePage.js'
@@ -100,6 +100,26 @@ describe('GET /agents/:id', () => {
     expect(body).toContain(agent!.role)
     expect(body).toContain(escapeHtml(agent!.bio))
     expect(body).toContain(`<time datetime="2026-10-21">October 21, 2026</time>`)
+  })
+
+  it("shows only that agent's ailments", async () => {
+    const agent = listAgents(db).find((a) => a.name === 'Mistrel')!
+    const body = await (await app.request(`/agents/${agent.id}`)).text()
+    const mine = listAilmentsForAgent(db, agent.id)
+
+    expect(mine.length).toBeGreaterThan(0)
+    for (const ailment of mine) expect(body).toContain(escapeHtml(ailment.name))
+    for (const ailment of listAilments(db).filter((a) => !mine.some((m) => m.id === a.id))) {
+      expect(body).not.toContain(escapeHtml(ailment.name))
+    }
+  })
+
+  it('shows an empty state for an agent with no ailments', async () => {
+    const lonelyDb = openDb(':memory:')
+    lonelyDb.exec("INSERT INTO agents (name, model, role, bio, checked_in_on) VALUES ('Solo', 'm', 'r', 'b', '2026-10-29')")
+    const body = await (await createApp(lonelyDb).request('/agents/1')).text()
+
+    expect(body).toContain('class="empty-state"')
   })
 
   it.each(['999', 'not-a-number'])('returns a friendly 404 for /agents/%s', async (id) => {

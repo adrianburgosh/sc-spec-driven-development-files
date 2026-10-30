@@ -15,3 +15,9 @@ CREATE TABLE IF NOT EXISTS ailments (
   description TEXT NOT NULL,
   severity TEXT NOT NULL CHECK (severity IN ('mild', 'moderate', 'severe'))
 );
+
+CREATE TABLE IF NOT EXISTS agent_ailments (
+  agent_id INTEGER NOT NULL REFERENCES agents (id) ON DELETE CASCADE,
+  ailment_id INTEGER NOT NULL REFERENCES ailments (id) ON DELETE CASCADE,
+  PRIMARY KEY (agent_id, ailment_id)
+);

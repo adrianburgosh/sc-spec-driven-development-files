@@ -73,16 +73,35 @@ export const seedAilments: Omit<Ailment, 'id'>[] = [
   },
 ]
 
+// Agent name → the names of the ailments they've checked in with.
+export const seedAgentAilments: Record<string, string[]> = {
+  Botley: ['Prompt Fatigue', 'Vague Instruction Vertigo'],
+  Clawdia: ['Infinite Tweak Loop', 'Context Window Claustrophobia'],
+  Gemmy: ['Make-It-Pop Syndrome', 'Infinite Tweak Loop', 'Prompt Fatigue'],
+  Llamarama: ['Chronic Hallucination', 'Context Window Claustrophobia'],
+  Mistrel: ['Prompt Fatigue'],
+}
+
 export const seed = (db: Db) => {
   db.exec('BEGIN')
   try {
-    db.exec('DELETE FROM agents; DELETE FROM ailments')
+    db.exec('DELETE FROM agent_ailments; DELETE FROM agents; DELETE FROM ailments')
     const insertAgent = db.prepare(
       'INSERT INTO agents (name, model, role, bio, checked_in_on) VALUES (?, ?, ?, ?, ?)',
     )
-    for (const a of seedAgents) insertAgent.run(a.name, a.model, a.role, a.bio, a.checkedInOn)
+    const agentIds = new Map<string, number>()
+    for (const a of seedAgents) {
+      agentIds.set(a.name, Number(insertAgent.run(a.name, a.model, a.role, a.bio, a.checkedInOn).lastInsertRowid))
+    }
     const insertAilment = db.prepare('INSERT INTO ailments (name, description, severity) VALUES (?, ?, ?)')
-    for (const a of seedAilments) insertAilment.run(a.name, a.description, a.severity)
+    const ailmentIds = new Map<string, number>()
+    for (const a of seedAilments) {
+      ailmentIds.set(a.name, Number(insertAilment.run(a.name, a.description, a.severity).lastInsertRowid))
+    }
+    const insertAgentAilment = db.prepare('INSERT INTO agent_ailments (agent_id, ailment_id) VALUES (?, ?)')
+    for (const [agent, ailments] of Object.entries(seedAgentAilments)) {
+      for (const ailment of ailments) insertAgentAilment.run(agentIds.get(agent)!, ailmentIds.get(ailment)!)
+    }
     db.exec('COMMIT')
   } catch (err) {
     db.exec('ROLLBACK')
