@@ -22,6 +22,23 @@ const db = openDb(':memory:')
 seed(db, NOW)
 const app = createApp(db, clock)
 
+type App = ReturnType<typeof createApp>
+
+// For tests that change data: a seeded database and app of their own.
+const freshApp = () => {
+  const freshDb = openDb(':memory:')
+  seed(freshDb, NOW)
+  return { freshDb, freshApp: createApp(freshDb, clock) }
+}
+
+const post = (target: App, path: string, form: Record<string, string> = {}) =>
+  target.request(path, { method: 'POST', body: new URLSearchParams(form) })
+
+const book = (target: App, form: Record<string, string>) => post(target, '/appointments', form)
+
+const countAppointments = (target: typeof db) =>
+  (target.prepare('SELECT COUNT(*) AS n FROM appointments').get() as { n: number }).n
+
 describe('GET /', () => {
   it('responds with an HTML page', async () => {
     const res = await app.request('/')
@@ -270,16 +287,6 @@ describe('GET /appointments/new', () => {
 })
 
 describe('POST /appointments', () => {
-  const freshApp = () => {
-    const freshDb = openDb(':memory:')
-    seed(freshDb, NOW)
-    return { freshDb, freshApp: createApp(freshDb, clock) }
-  }
-  const book = (target: ReturnType<typeof createApp>, form: Record<string, string>) =>
-    target.request('/appointments', { method: 'POST', body: new URLSearchParams(form) })
-  const countAppointments = (target: typeof db) =>
-    (target.prepare('SELECT COUNT(*) AS n FROM appointments').get() as { n: number }).n
-
   it('books a free slot and redirects to the highlighted appointment', async () => {
     const { freshDb, freshApp: target } = freshApp()
     const [agent] = listAgents(freshDb)
@@ -333,6 +340,62 @@ describe('POST /appointments', () => {
     expect(res.status).toBe(409)
     expect(countAppointments(freshDb)).toBe(before)
     expect(body).toContain('that slot was just taken')
+  })
+})
+
+describe('POST /appointments/:id/cancel', () => {
+  it('has a labelled Cancel button for every upcoming appointment', async () => {
+    const body = await (await app.request('/appointments')).text()
+
+    for (const a of listUpcomingAppointments(db, NOW)) {
+      expect(body).toContain(`<form method="post" action="/appointments/${a.id}/cancel">`)
+      expect(body).toContain(`aria-label="Cancel ${a.therapyName} for ${a.agentName} on ${formatSlot(a.slot)}"`)
+    }
+  })
+
+  it('cancels, redirects, and frees the slot to be booked again', async () => {
+    const { freshDb, freshApp: target } = freshApp()
+    const appointment = listUpcomingAppointments(freshDb, NOW)[1]!
+    const res = await post(target, `/appointments/${appointment.id}/cancel`)
+
+    expect(res.status).toBe(303)
+    expect(res.headers.get('location')).toBe('/appointments')
+    expect(getAppointment(freshDb, appointment.id)!.status).toBe('cancelled')
+    expect(await (await target.request('/appointments')).text()).not.toContain(`datetime="${appointment.slot}"`)
+    expect(await (await target.request('/appointments/new')).text()).toContain(`<option value="${appointment.slot}"`)
+
+    const rebook = await book(target, {
+      agent: String(appointment.agentId),
+      therapy: String(appointment.therapyId),
+      slot: appointment.slot,
+    })
+    expect(rebook.status).toBe(303)
+  })
+
+  it.each(['999', 'not-a-number'])('returns a friendly 404 for appointment %s', async (id) => {
+    const res = await post(app, `/appointments/${id}/cancel`)
+    const main = (await res.text()).match(/<main[^>]*>(.*)<\/main>/s)?.[1] ?? ''
+
+    expect(res.status).toBe(404)
+    expect(main).toContain('Appointment not found')
+    expect(main).toContain('href="/appointments"')
+  })
+
+  it('returns 404 for an appointment that is already cancelled', async () => {
+    const { freshDb, freshApp: target } = freshApp()
+    const appointment = listUpcomingAppointments(freshDb, NOW)[0]!
+
+    expect((await post(target, `/appointments/${appointment.id}/cancel`)).status).toBe(303)
+    expect((await post(target, `/appointments/${appointment.id}/cancel`)).status).toBe(404)
+  })
+
+  it('returns 404 for an appointment that has already started, and leaves it booked', async () => {
+    const { freshDb } = freshApp()
+    const appointment = listUpcomingAppointments(freshDb, NOW)[0]! // Monday 09:00
+    const later = createApp(freshDb, { now: () => new Date(2026, 10, 2, 9, 15) })
+
+    expect((await post(later, `/appointments/${appointment.id}/cancel`)).status).toBe(404)
+    expect(getAppointment(freshDb, appointment.id)!.status).toBe('booked')
   })
 })
 

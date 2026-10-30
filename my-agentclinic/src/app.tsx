@@ -2,7 +2,13 @@ import { Hono } from 'hono'
 import type { Context } from 'hono'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { getAgent, listAgents } from './db/agents.js'
-import { createAppointment, listFreeSlots, listUpcomingAppointments, SlotTakenError } from './db/appointments.js'
+import {
+  cancelAppointment,
+  createAppointment,
+  listFreeSlots,
+  listUpcomingAppointments,
+  SlotTakenError,
+} from './db/appointments.js'
 import { listAilments, listAilmentsForAgent } from './db/ailments.js'
 import type { Db } from './db/index.js'
 import { listTherapies, listTherapiesByAilment } from './db/therapies.js'
@@ -12,6 +18,7 @@ import { AgentNotFoundPage } from './views/AgentNotFoundPage.js'
 import { AgentPage } from './views/AgentPage.js'
 import { AgentsPage } from './views/AgentsPage.js'
 import { AilmentsPage } from './views/AilmentsPage.js'
+import { AppointmentNotFoundPage } from './views/AppointmentNotFoundPage.js'
 import { AppointmentsPage } from './views/AppointmentsPage.js'
 import { BookingPage } from './views/BookingPage.js'
 import { HomePage } from './views/HomePage.js'
@@ -97,6 +104,12 @@ export const createApp = (db: Db, { now = () => new Date() }: AppOptions = {}) =
         409,
       )
     }
+  })
+
+  app.post('/appointments/:id/cancel', (c) => {
+    const id = parseId(c.req.param('id'))
+    if (id === undefined || !cancelAppointment(db, id, now())) return c.html(<AppointmentNotFoundPage />, 404)
+    return c.redirect('/appointments', 303)
   })
 
   return app

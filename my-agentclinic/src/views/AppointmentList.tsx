@@ -4,9 +4,11 @@ import type { Appointment } from '../types.js'
 type AppointmentListProps = {
   appointments: Appointment[]
   highlightId?: number
+  /** Where to land after cancelling. Defaults to /appointments. */
+  cancelRedirect?: string
 }
 
-export const AppointmentList = ({ appointments, highlightId }: AppointmentListProps) => (
+export const AppointmentList = ({ appointments, highlightId, cancelRedirect }: AppointmentListProps) => (
   <ul class="appointment-list">
     {appointments.map((appointment) => (
       <li class={appointment.id === highlightId ? 'highlight' : undefined}>
@@ -14,6 +16,16 @@ export const AppointmentList = ({ appointments, highlightId }: AppointmentListPr
         <span>
           <a href={`/agents/${appointment.agentId}`}>{appointment.agentName}</a> · {appointment.therapyName}
         </span>
+        <form method="post" action={`/appointments/${appointment.id}/cancel`}>
+          {cancelRedirect && <input type="hidden" name="redirect" value={cancelRedirect} />}
+          <button
+            type="submit"
+            class="secondary outline"
+            aria-label={`Cancel ${appointment.therapyName} for ${appointment.agentName} on ${formatSlot(appointment.slot)}`}
+          >
+            Cancel
+          </button>
+        </form>
       </li>
     ))}
   </ul>

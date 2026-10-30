@@ -29,6 +29,12 @@ export const listFreeSlots = (db: Db, now: Date): string[] => {
   return upcomingSlots(now).filter((slot) => !booked.has(slot))
 }
 
+/** Cancels a booked appointment that hasn't started yet. Returns false if there was nothing to cancel. */
+export const cancelAppointment = (db: Db, id: number, now: Date): boolean =>
+  db
+    .prepare("UPDATE appointments SET status = 'cancelled' WHERE id = ? AND status = 'booked' AND slot > ?")
+    .run(id, nowKey(now)).changes > 0
+
 export class SlotTakenError extends Error {
   constructor(slot: string) {
     super(`Slot ${slot} is already booked`)
