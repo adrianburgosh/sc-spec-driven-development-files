@@ -22,7 +22,7 @@
 
 ## 3. SQLite & migration
 
-3.1. Install `better-sqlite3` and the dev dependency `@types/better-sqlite3`.
+3.1. Move to Node 24 LTS: add `.nvmrc` (`24`), set `engines.node` to `>=24`, and bump `@types/node` to 24. Use the built-in `node:sqlite` (`DatabaseSync`).
 3.2. Create `src/db/schema.sql` with the `agents` and `ailments` tables (`CREATE TABLE IF NOT EXISTS`, plus a `CHECK` on `severity`).
 3.3. Create `src/db/index.ts`:
   - `openDb(path)` opens the database, enables foreign keys, and runs `schema.sql` (the migration)

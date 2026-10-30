@@ -5,7 +5,7 @@ Guiding principle: a popular, reliable, TypeScript-first stack with as few movin
 ## Language & runtime
 
 - **TypeScript** (strict mode) everywhere.
-- **Node.js** (current LTS).
+- **Node.js** 24 (current LTS), pinned with `.nvmrc` and `engines`.
 
 ## Web framework
 
@@ -29,7 +29,7 @@ Guiding principle: a popular, reliable, TypeScript-first stack with as few movin
 
 ## Data
 
-- **SQLite** as the database (a single file, zero ops).
+- **SQLite** as the database (a single file, zero ops), through Node's built-in **`node:sqlite`** (`DatabaseSync`). There is no native dependency and nothing to compile at install time.
 - Accessed through a thin, typed data-access layer; schema created/migrated from SQL files at startup.
 
 ## Testing & quality
